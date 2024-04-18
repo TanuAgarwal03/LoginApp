@@ -1,16 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-// import 'package:login_page/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const LoginApp());
 }
-
 class LoginApp extends StatelessWidget {
   const LoginApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
@@ -18,6 +15,7 @@ class LoginApp extends StatelessWidget {
     );
   }
 }
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,11 +25,18 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+
   final TextEditingController _usernameController =
       TextEditingController(); //TextEditingController objects for handling the text input
   final TextEditingController _passwordController = TextEditingController();
-  String _errorMessage =
-      ''; //a string _errorMessage to display validation errors.
+  String _errorMessage = ''; //a string _errorMessage to display validation errors.
+
+
+Future<void> _saveDataLocally(String userId, String token) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('userId', userId.trim());
+  await prefs.setString('token', token.trim());
+  }
 
 Future<void> _login() async {
   String username = _usernameController.text.trim();
@@ -43,32 +48,27 @@ Future<void> _login() async {
     body: {'username': username, 'password': password},
   );
 
-  // Handle response
   if (response.statusCode == 201) {
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body); //authentication successful
     print(data);
-    // Authentication successful
-    // Navigate to the UserDetailPage and pass the data received from the API
-    Navigator.push(
+    String userId = data['user']['id'].toString(); // Assuming 'userId' is the key for user ID in the API response
+    String token = data['user']['token'];
+    
+    _saveDataLocally(userId, token);
+    print(userId);
+    print(token);
+    Navigator.push(       // Navigate to the UserDetailPage and pass the data received from the API
       context,
       MaterialPageRoute(
         builder: (context) => UserDetailPage(data: data),
       ),
     );
   } else {
-    // Authentication failed
     setState(() {
-      _errorMessage = 'Invalid username or password.';
+      _errorMessage = 'Invalid username or password.'; //authentication failed
     });
   }
 }
-
-  
-//   void _login() {
-//     String username = _usernameController.text.trim();
-//     String password = _passwordController.text.trim();
-
-//The build method builds the UI of the login page. It returns a Scaffold widget with an AppBar containing the title 'Login Page' and a body containing the main content.
 
   @override
   Widget build(BuildContext context) {
@@ -113,17 +113,66 @@ Future<void> _login() async {
   }
 }
 
-class UserDetailPage extends StatelessWidget {
-  final dynamic data;
 
+
+class UserDetailPage extends StatefulWidget {
+  final dynamic data;
   const UserDetailPage({super.key, required this.data});
 
   @override
-  Widget build(BuildContext context) {
-    // Split the data by commas
-    List<String> details = data.toString().split(',');
+  State<UserDetailPage> createState() => _UserDetailPageState();
+}
 
-    _saveDataLocally(details[11]);
+class _UserDetailPageState extends State<UserDetailPage> {
+  late String userID = ''; 
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserID();
+    // _getToken();
+  }
+  Future<String?> _getUserID() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userID =  prefs.getString('userId') ?? '';
+    setState(() {
+    });
+    // print(userID);
+    _fetchUserDetails();
+  }
+  // Future<String?> _getToken() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String token1 = prefs.getString('token') ?? '';
+  //   setState(() {
+  //     var token = token1;
+  //   });
+  //   print(token1);
+  // }
+
+  Future<void> _fetchUserDetails() async {
+    final response = await http.get(
+      Uri.parse('http://192.168.1.17:8000/user/$userID'), // Replace with your actual API endpoint
+    );
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+    if (response.statusCode == 200) {
+      final userDetails = jsonDecode(response.body);
+      // Update the UI with user details
+      setState(() {
+        print("SUCCESS");
+        // You can access user details like userDetails['name'], userDetails['email'], etc.
+      });
+    } else {
+      // Handle API error
+      setState(() {
+        print("API ERROR");
+      });
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    List<String> details = widget.data.toString().split(',');    // Split the data by commas
 
     return Scaffold(
       appBar: AppBar(
@@ -134,8 +183,7 @@ class UserDetailPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Display each detail on a new line
-            for (var detail in details)
+            for (var detail in details)            // Display each detail on a new line
               Text(detail.trim(), style: const TextStyle(fontSize: 18)),
             ElevatedButton(
               onPressed: () {
@@ -148,13 +196,4 @@ class UserDetailPage extends StatelessWidget {
       ),
     );
   }
-  Future<void> _saveDataLocally(String userId) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  
-  // Save the user ID to shared preferences
-  await prefs.setString('userId', userId.trim());
-  print("User ID saved to local storage");
-  print(userId);
-  }
-
 }
