@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -85,7 +86,7 @@ Future<void> _login() async {
             if (_errorMessage.isNotEmpty)
               Text(
                 _errorMessage,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.blue),
               ),
             TextFormField(
               controller: _usernameController,
@@ -178,8 +179,29 @@ class _UserDetailPageState extends State<UserDetailPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (var detail in details)            // Display each detail on a new line
-              Text(detail.trim(), style: const TextStyle(fontSize: 18)),
+            // for (var detail in details)            // Display each detail on a new line
+            //   Text(detail.trim(), style: const TextStyle(fontSize: 18)),
+            Center(
+              child :UserDetailItem(label: 'Username', value: widget.data['user']['username'])
+              ),
+            Center(
+              child: UserDetailItem(label: 'Email', value: widget.data['user']['email'])
+            ),
+            Center(
+              child: UserDetailItem(label: 'First Name', value: widget.data['user']['first_name'])
+            ),
+            Center(
+              child: UserDetailItem(label: 'Last Name', value: widget.data['user']['last_name'])
+              ),
+            Center(
+              child: UserDetailItem(label: 'Country', value: widget.data['user']['country'])
+              ),
+            Center(
+              child: UserDetailItem(label: 'State', value: widget.data['user']['state'])
+              ),
+            Center(
+              child: UserDetailItem(label: 'Profile image', value: widget.data['user']['image'])
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context); // Navigate back to the login page
@@ -188,6 +210,34 @@ class _UserDetailPageState extends State<UserDetailPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class UserDetailItem extends StatelessWidget {
+  final String label;
+  final String value;
+  const UserDetailItem({Key? key, required this.label, required this.value}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+        ],
       ),
     );
   }
