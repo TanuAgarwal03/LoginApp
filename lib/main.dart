@@ -130,7 +130,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
   void initState() {
     super.initState();
     _getUserID();
-    // _getToken();
   }
   Future<String?> _getUserID() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -140,24 +139,20 @@ class _UserDetailPageState extends State<UserDetailPage> {
     // print(userID);
     _fetchUserDetails();
   }
-  // Future<String?> _getToken() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String token1 = prefs.getString('token') ?? '';
-  //   setState(() {
-  //     var token = token1;
-  //   });
-  //   print(token1);
-  // }
-
+ 
   Future<void> _fetchUserDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userID =  prefs.getString('userId') ?? '';
+    String token =  prefs.getString('token') ?? '';
+
     final response = await http.get(
-      Uri.parse('http://192.168.1.17:8000/user/$userID'), // Replace with your actual API endpoint
+      Uri.parse('http://192.168.1.17:8000/user/$userID/'), 
+      headers: {'Authorization': 'token $token'},
     );
     print('Response status code: ${response.statusCode}');
     print('Response body: ${response.body}');
     if (response.statusCode == 200) {
       final userDetails = jsonDecode(response.body);
-      // Update the UI with user details
       setState(() {
         print("SUCCESS");
         // You can access user details like userDetails['name'], userDetails['email'], etc.
