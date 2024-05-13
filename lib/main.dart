@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const LoginApp());
 }
+
 class LoginApp extends StatelessWidget {
   const LoginApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
@@ -17,59 +18,52 @@ class LoginApp extends StatelessWidget {
   }
 }
 
-
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-
-  final TextEditingController _usernameController =
-      TextEditingController(); //TextEditingController objects for handling the text input
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  String _errorMessage = ''; //a string _errorMessage to display validation errors.
+  String _errorMessage = '';
 
-
-Future<void> _saveDataLocally(String userId, String token) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('userId', userId.trim());
-  await prefs.setString('token', token.trim());
+  Future<void> _saveDataLocally(String userId, String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', userId.trim());
+    await prefs.setString('token', token.trim());
   }
 
-Future<void> _login() async {
-  String username = _usernameController.text.trim();
-  String password = _passwordController.text.trim();
+  Future<void> _login() async {
+    String username = _usernameController.text.trim();
+    String password = _passwordController.text.trim();
 
-  // Send POST request to Django API endpoint
-  final response = await http.post(
-    Uri.parse('http://192.168.1.17:8000/login_api/'),
-    body: {'username': username, 'password': password},
-  );
-
-  if (response.statusCode == 201) {
-    final data = jsonDecode(response.body); //authentication successful
-    print(data);
-    String userId = data['user']['id'].toString(); // Assuming 'userId' is the key for user ID in the API response
-    String token = data['user']['token'];
-    
-    _saveDataLocally(userId, token);
-    print(userId);
-    print(token);
-    Navigator.push(       // Navigate to the UserDetailPage and pass the data received from the API
-      context,
-      MaterialPageRoute(
-        builder: (context) => UserDetailPage(data: data),
-      ),
+    final response = await http.post(
+      Uri.parse('http://192.168.1.26:8000/login_api/'),
+      body: {'username': username, 'password': password},
     );
-  } else {
-    setState(() {
-      _errorMessage = 'Invalid username or password.'; //authentication failed
-    });
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      String userId = data['user']['id'].toString();
+      String token = data['user']['token'];
+
+      _saveDataLocally(userId, token);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserDetailPage(data: data),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = 'Invalid username or password.';
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +80,7 @@ Future<void> _login() async {
             if (_errorMessage.isNotEmpty)
               Text(
                 _errorMessage,
-                style: const TextStyle(color: Colors.blue),
+                style: const TextStyle(color: Colors.red),
               ),
             TextFormField(
               controller: _usernameController,
@@ -115,7 +109,6 @@ Future<void> _login() async {
 }
 
 
-
 class UserDetailPage extends StatefulWidget {
   final dynamic data;
   const UserDetailPage({super.key, required this.data});
@@ -125,51 +118,48 @@ class UserDetailPage extends StatefulWidget {
 }
 
 class _UserDetailPageState extends State<UserDetailPage> {
-  late String userID = ''; 
+  late String userID = '';
+  late String token = '';
 
   @override
   void initState() {
     super.initState();
     _getUserID();
+    
   }
-  Future<String?> _getUserID() async {
+
+  Future<void> _getUserID() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userID =  prefs.getString('userId') ?? '';
-    setState(() {
-    });
-    // print(userID);
+    userID = prefs.getString('userId') ?? '';
+    setState(() {});
+
     _fetchUserDetails();
   }
- 
+
   Future<void> _fetchUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userID =  prefs.getString('userId') ?? '';
-    String token =  prefs.getString('token') ?? '';
+    String userID = prefs.getString('userId') ?? '';
+    String token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://192.168.1.17:8000/user/$userID/'), 
+      Uri.parse('http://192.168.1.26:8000/user/$userID/'),
       headers: {'Authorization': 'token $token'},
     );
-    print('Response status code: ${response.statusCode}');
-    print('Response body: ${response.body}');
+
     if (response.statusCode == 200) {
       final userDetails = jsonDecode(response.body);
       setState(() {
         print("SUCCESS");
-        // You can access user details like userDetails['name'], userDetails['email'], etc.
       });
     } else {
-      // Handle API error
       setState(() {
         print("API ERROR");
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    List<String> details = widget.data.toString().split(',');    // Split the data by commas
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Details'),
@@ -179,32 +169,65 @@ class _UserDetailPageState extends State<UserDetailPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // for (var detail in details)            // Display each detail on a new line
-            //   Text(detail.trim(), style: const TextStyle(fontSize: 18)),
             Center(
-              child :UserDetailItem(label: 'Username', value: widget.data['user']['username'])
+              child: UserDetailItem(
+                label: 'Username',
+                value: widget.data['user']['username'],
               ),
-            Center(
-              child: UserDetailItem(label: 'Email', value: widget.data['user']['email'])
             ),
             Center(
-              child: UserDetailItem(label: 'First Name', value: widget.data['user']['first_name'])
+              child: UserDetailItem(
+                label: 'Email',
+                value: widget.data['user']['email'],
+              ),
             ),
             Center(
-              child: UserDetailItem(label: 'Last Name', value: widget.data['user']['last_name'])
+              child: UserDetailItem(
+                label: 'First Name',
+                value: widget.data['user']['first_name'],
               ),
+            ),
             Center(
-              child: UserDetailItem(label: 'Country', value: widget.data['user']['country'])
+              child: UserDetailItem(
+                label: 'Last Name',
+                value: widget.data['user']['last_name'],
               ),
+            ),
             Center(
-              child: UserDetailItem(label: 'State', value: widget.data['user']['state'])
+              child: UserDetailItem(
+                label: 'Country',
+                value: widget.data['user']['country'],
               ),
+            ),
             Center(
-              child: UserDetailItem(label: 'Profile image', value: widget.data['user']['image'])
+              child: UserDetailItem(
+                label: 'State',
+                value: widget.data['user']['state'],
+              ),
+            ),
+            Center(
+              child: UserDetailItem(
+                label: 'Profile image',
+                value: widget.data['user']['image'],
+              ),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context); // Navigate back to the login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UpdateUserPage(
+                      userId: userID,
+                      token: token,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Update User Details'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
               },
               child: const Text('Back to Login'),
             ),
@@ -215,10 +238,185 @@ class _UserDetailPageState extends State<UserDetailPage> {
   }
 }
 
+
+class UpdateUserProfilePage extends StatefulWidget {
+  final String userId;
+
+  UpdateUserProfilePage({required this.userId});
+
+  @override
+  _UpdateUserProfilePageState createState() => _UpdateUserProfilePageState();
+}
+
+class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+
+  Future<void> _updateUserProfile() async {
+    final url = 'http://192.168.1.26:8000/user/${widget.userId}/';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('token') ?? '';
+
+    final response = await http.put(
+      Uri.parse(url),
+      body: json.encode({
+        'userId': widget.userId,
+        'name': _nameController.text,
+        'email': _emailController.text,
+      }),
+      headers: {'Content-Type': 'application/json',
+      'Authorization': 'token $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      print("Updated");
+    } else {
+      print("changes not done");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Update Profile'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            TextFormField(
+              controller: _emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+            
+            SizedBox(height: 20.0),
+            ElevatedButton(
+              onPressed: _updateUserProfile,
+              child: Text('Update Profile'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class UpdateUserPage extends StatefulWidget {
+  final String userId;
+  final String token;
+
+  const UpdateUserPage({Key? key, required this.userId, required this.token}) : super(key: key);
+
+  @override
+  State<UpdateUserPage> createState() => _UpdateUserPageState();
+}
+
+class _UpdateUserPageState extends State<UpdateUserPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Update User Details'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            TextFormField(
+              controller: _usernameController,
+              decoration: const InputDecoration(labelText: 'Username'),
+            ),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+            TextFormField(
+              controller: _firstNameController,
+              decoration: const InputDecoration(labelText: 'First Name'),
+            ),
+            TextFormField(
+              controller: _lastNameController,
+              decoration: const InputDecoration(labelText: 'Last Name'),
+            ),
+            TextFormField(
+              controller: _countryController,
+              decoration: const InputDecoration(labelText: 'Country'),
+            ),
+            TextFormField(
+              controller: _stateController,
+              decoration: const InputDecoration(labelText: 'State'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Retrieve the values entered by the user
+                String username = _usernameController.text.trim();
+                String email = _emailController.text.trim();
+                String firstName = _firstNameController.text.trim();
+                String lastName = _lastNameController.text.trim();
+                String country = _countryController.text.trim();
+                String state = _stateController.text.trim();
+                
+                // Construct the JSON payload
+                Map<String, dynamic> data = {
+                  'username': username,
+                  'email': email,
+                  'first_name': firstName,
+                  'last_name': lastName,
+                  'country': country,
+                  'state': state,
+                };
+
+                // Send PUT request to update user details
+                try {
+                  final response = await http.put(
+                    Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
+                    headers: {
+                      'Authorization': 'token ${widget.token}',
+                      'Content-Type': 'application/json',
+                    },
+                    body: jsonEncode(data),
+                  );
+
+                  if (response.statusCode == 200) {
+                    // If update successful, navigate back to UserDetailPage
+                    Navigator.pop(context); // Remove UpdateUserPage from the stack
+                  } else {
+                    // Handle error
+                    print('Failed to update user details. Status code: ${response.statusCode}');
+                  }
+                } catch (e) {
+                  // Handle error
+                  print('Error updating user details: $e');
+                }
+              },
+              child: const Text('Update'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
 class UserDetailItem extends StatelessWidget {
   final String label;
   final String value;
-  const UserDetailItem({Key? key, required this.label, required this.value}) : super(key: key);
+  const UserDetailItem({super.key, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
