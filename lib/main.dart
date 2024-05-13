@@ -19,7 +19,7 @@ class LoginApp extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -110,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 class UserDetailPage extends StatefulWidget {
   final dynamic data;
-  const UserDetailPage({Key? key, required this.data}) : super(key: key);
+  const UserDetailPage({super.key, required this.data});
 
   @override
   State<UserDetailPage> createState() => _UserDetailPageState();
@@ -246,7 +246,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
 class UpdateUserProfilePage extends StatefulWidget {
   final String userId;
 
-  UpdateUserProfilePage({required this.userId});
+  const UpdateUserProfilePage({super.key, required this.userId});
 
   @override
   _UpdateUserProfilePageState createState() => _UpdateUserProfilePageState();
@@ -316,7 +316,7 @@ class UpdateUserPage extends StatefulWidget {
   final String userId;
   final String token;
 
-  const UpdateUserPage({Key? key, required this.userId, required this.token}) : super(key: key);
+  const UpdateUserPage({super.key, required this.userId, required this.token});
 
   @override
   State<UpdateUserPage> createState() => _UpdateUserPageState();
@@ -337,7 +337,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
         title: const Text('Update User Details'),
       ),
       body: Container(
-        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3, vertical: MediaQuery.of(context).size.width*0.1),
+        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3, vertical: MediaQuery.of(context).size.width*0.05),
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
