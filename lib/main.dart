@@ -71,8 +71,9 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text('Login Page'),
       ),
-      body: Padding(
+      body: Container(
         padding: const EdgeInsets.all(20.0),
+        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -107,11 +108,9 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
-
 class UserDetailPage extends StatefulWidget {
   final dynamic data;
-  const UserDetailPage({super.key, required this.data});
+  const UserDetailPage({Key? key, required this.data}) : super(key: key);
 
   @override
   State<UserDetailPage> createState() => _UserDetailPageState();
@@ -124,22 +123,22 @@ class _UserDetailPageState extends State<UserDetailPage> {
   @override
   void initState() {
     super.initState();
-    _getUserID();
-    
+    _getUserID();    
   }
 
   Future<void> _getUserID() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     userID = prefs.getString('userId') ?? '';
+    token = prefs.getString('token') ?? '';
     setState(() {});
 
     _fetchUserDetails();
+    print(token);
   }
 
   Future<void> _fetchUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userID = prefs.getString('userId') ?? '';
-    String token = prefs.getString('token') ?? '';
 
     final response = await http.get(
       Uri.parse('http://192.168.1.26:8000/user/$userID/'),
@@ -169,49 +168,44 @@ class _UserDetailPageState extends State<UserDetailPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: UserDetailItem(
-                label: 'Username',
-                value: widget.data['user']['username'],
+            Container(
+              alignment: Alignment.center,
+              margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.2),
+              child: Column(
+                children: [
+                  UserDetailItem(
+                    label: 'Username',
+                    value: widget.data['user']['username'],
+                  ),
+                  UserDetailItem(
+                    label: 'Email',
+                    value: widget.data['user']['email'],
+                  ),
+                  UserDetailItem(
+                    label: 'First Name',
+                    value: widget.data['user']['first_name'],
+                  ),
+                  UserDetailItem(
+                    label: 'Last Name',
+                    value: widget.data['user']['last_name'],
+                  ),
+                  UserDetailItem(
+                    label: 'Country',
+                    value: widget.data['user']['country'],
+                  ),
+                  UserDetailItem(
+                    label: 'State',
+                    value: widget.data['user']['state'],
+                  ),
+                  UserDetailItem(
+                    label: 'Profile image',
+                    value: widget.data['user']['image'],
+                  ),
+                ],
               ),
             ),
             Center(
-              child: UserDetailItem(
-                label: 'Email',
-                value: widget.data['user']['email'],
-              ),
-            ),
-            Center(
-              child: UserDetailItem(
-                label: 'First Name',
-                value: widget.data['user']['first_name'],
-              ),
-            ),
-            Center(
-              child: UserDetailItem(
-                label: 'Last Name',
-                value: widget.data['user']['last_name'],
-              ),
-            ),
-            Center(
-              child: UserDetailItem(
-                label: 'Country',
-                value: widget.data['user']['country'],
-              ),
-            ),
-            Center(
-              child: UserDetailItem(
-                label: 'State',
-                value: widget.data['user']['state'],
-              ),
-            ),
-            Center(
-              child: UserDetailItem(
-                label: 'Profile image',
-                value: widget.data['user']['image'],
-              ),
-            ),
-            ElevatedButton(
+              child: ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -225,18 +219,28 @@ class _UserDetailPageState extends State<UserDetailPage> {
               },
               child: const Text('Update User Details'),
             ),
-            ElevatedButton(
+            ),
+            
+
+
+            const SizedBox(height: 10), //for spacing between the buttons
+
+
+            Center(
+              child:ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
               child: const Text('Back to Login'),
             ),
+            )
           ],
         ),
       ),
     );
   }
 }
+
 
 
 class UpdateUserProfilePage extends StatefulWidget {
@@ -249,8 +253,8 @@ class UpdateUserProfilePage extends StatefulWidget {
 }
 
 class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   Future<void> _updateUserProfile() async {
     final url = 'http://192.168.1.26:8000/user/${widget.userId}/';
@@ -264,8 +268,9 @@ class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
         'name': _nameController.text,
         'email': _emailController.text,
       }),
-      headers: {'Content-Type': 'application/json',
-      'Authorization': 'token $token',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'token $token',
       },
     );
     if (response.statusCode == 200) {
@@ -279,25 +284,25 @@ class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Update Profile'),
+        title: const Text('Update Profile'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: const InputDecoration(labelText: 'Name'),
             ),
             TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
             
-            SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: _updateUserProfile,
-              child: Text('Update Profile'),
+              child: const Text('Update Profile'),
             ),
           ],
         ),
@@ -331,7 +336,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       appBar: AppBar(
         title: const Text('Update User Details'),
       ),
-      body: Padding(
+      body: Container(
+        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3, vertical: MediaQuery.of(context).size.width*0.1),
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -360,6 +366,9 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
               controller: _stateController,
               decoration: const InputDecoration(labelText: 'State'),
             ),
+
+            const SizedBox(height: 20),
+
             ElevatedButton(
               onPressed: () async {
                 // Retrieve the values entered by the user
@@ -385,21 +394,17 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                   final response = await http.put(
                     Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
                     headers: {
-                      'Authorization': 'token ${widget.token}',
                       'Content-Type': 'application/json',
+                      'Authorization': 'token ${widget.token}',
                     },
                     body: jsonEncode(data),
                   );
-
                   if (response.statusCode == 200) {
-                    // If update successful, navigate back to UserDetailPage
-                    Navigator.pop(context); // Remove UpdateUserPage from the stack
+                    Navigator.pop(context); 
                   } else {
-                    // Handle error
                     print('Failed to update user details. Status code: ${response.statusCode}');
                   }
                 } catch (e) {
-                  // Handle error
                   print('Error updating user details: $e');
                 }
               },
