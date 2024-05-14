@@ -120,10 +120,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
   late String userID = '';
   late String token = '';
 
+  late Map<String,dynamic> userdata;
+
   @override
   void initState() {
     super.initState();
     _getUserID();    
+    userdata = widget.data['user'];
   }
 
   Future<void> _getUserID() async {
@@ -148,6 +151,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
     if (response.statusCode == 200) {
       final userDetails = jsonDecode(response.body);
       setState(() {
+        userdata = userDetails;
         print("SUCCESS");
       });
     } else {
@@ -175,27 +179,28 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 children: [
                   UserDetailItem(
                     label: 'Username',
-                    value: widget.data['user']['username'],
+                    // value: widget.data['user']['username'],
+                    value: userdata['username'],
                   ),
                   UserDetailItem(
                     label: 'Email',
-                    value: widget.data['user']['email'],
+                    value: userdata['email'],
                   ),
                   UserDetailItem(
                     label: 'First Name',
-                    value: widget.data['user']['first_name'],
+                    value: userdata['first_name'],
                   ),
                   UserDetailItem(
                     label: 'Last Name',
-                    value: widget.data['user']['last_name'],
+                    value: userdata['last_name'],
                   ),
                   UserDetailItem(
                     label: 'Country',
-                    value: widget.data['user']['country'],
+                    value: userdata['country'],
                   ),
                   UserDetailItem(
                     label: 'State',
-                    value: widget.data['user']['state'],
+                    value: userdata['state'],
                   ),
                   UserDetailItem(
                     label: 'Profile image',
@@ -206,8 +211,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
             ),
             Center(
               child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final updatedData = await Navigator.push( //push the data to correspondinf fields
                   context,
                   MaterialPageRoute(
                     builder: (context) => UpdateUserPage(
@@ -216,15 +221,17 @@ class _UserDetailPageState extends State<UserDetailPage> {
                     ),
                   ),
                 );
+                if (updatedData != null) {
+                  setState(() {
+                    userdata = updatedData;
+                  });
+                }
               },
               child: const Text('Update User Details'),
             ),
             ),
             
-
-
             const SizedBox(height: 10), //for spacing between the buttons
-
 
             Center(
               child:ElevatedButton(
@@ -240,9 +247,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
     );
   }
 }
-
-
-
 class UpdateUserProfilePage extends StatefulWidget {
   final String userId;
 
@@ -311,7 +315,6 @@ class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
   }
 }
 
-
 class UpdateUserPage extends StatefulWidget {
   final String userId;
   final String token;
@@ -330,6 +333,36 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   final TextEditingController _countryController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
 
+  //pre-fill the fields
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserDetails();
+  }
+
+  Future<void> _fetchUserDetails() async {
+    final response = await http.get(
+      Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
+      headers: {
+        'Authorization' : 'token ${widget.token}',
+        'Content-Type' : 'application/json',
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _usernameController.text = data['username'];
+        _emailController.text = data['email'];
+        _firstNameController.text = data['first_name'];
+        _lastNameController.text = data['last_name'];
+        _countryController.text = data['country'];
+        _stateController.text = data['state'];  
+      });
+    }
+    else {
+      print('failed to fetch user details. Status code : ${response.statusCode}');
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -400,7 +433,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                     body: jsonEncode(data),
                   );
                   if (response.statusCode == 200) {
-                    Navigator.pop(context); 
+                    Navigator.pop(context, data);  // sending the updated data to userDetailPage
+                    print("details updated");
                   } else {
                     print('Failed to update user details. Status code: ${response.statusCode}');
                   }
