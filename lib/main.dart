@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'userDetail.dart';
+// import 'userDetailUpdate.dart';
 
 void main() {
   runApp(const LoginApp());
@@ -108,374 +110,375 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-class UserDetailPage extends StatefulWidget {
-  final dynamic data;
-  const UserDetailPage({super.key, required this.data});
 
-  @override
-  State<UserDetailPage> createState() => _UserDetailPageState();
-}
+// class UserDetailPage extends StatefulWidget {
+//   final dynamic data;
+//   const UserDetailPage({super.key, required this.data});
 
-class _UserDetailPageState extends State<UserDetailPage> {
-  late String userID = '';
-  late String token = '';
+//   @override
+//   State<UserDetailPage> createState() => _UserDetailPageState();
+// }
 
-  late Map<String,dynamic> userdata;
+// class _UserDetailPageState extends State<UserDetailPage> {
+//   late String userID = '';
+//   late String token = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _getUserID();    
-    userdata = widget.data['user'];
-  }
+//   late Map<String,dynamic> userdata;
 
-  Future<void> _getUserID() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    userID = prefs.getString('userId') ?? '';
-    token = prefs.getString('token') ?? '';
-    setState(() {});
+//   @override
+//   void initState() {
+//     super.initState();
+//     _getUserID();    
+//     userdata = widget.data['user'];
+//   }
 
-    _fetchUserDetails();
-    print(token);
-  }
+//   Future<void> _getUserID() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     userID = prefs.getString('userId') ?? '';
+//     token = prefs.getString('token') ?? '';
+//     setState(() {});
 
-  Future<void> _fetchUserDetails() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userID = prefs.getString('userId') ?? '';
+//     _fetchUserDetails();
+//     print(token);
+//   }
 
-    final response = await http.get(
-      Uri.parse('http://192.168.1.26:8000/user/$userID/'),
-      headers: {'Authorization': 'token $token'},
-    );
+//   Future<void> _fetchUserDetails() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     String userID = prefs.getString('userId') ?? '';
 
-    if (response.statusCode == 200) {
-      final userDetails = jsonDecode(response.body);
-      setState(() {
-        userdata = userDetails;
-        print("SUCCESS");
-      });
-    } else {
-      setState(() {
-        print("API ERROR");
-      });
-    }
-  }
+//     final response = await http.get(
+//       Uri.parse('http://192.168.1.26:8000/user/$userID/'),
+//       headers: {'Authorization': 'token $token'},
+//     );
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Details'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              alignment: Alignment.center,
-              margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.2),
-              child: Column(
-                children: [
-                  UserDetailItem(
-                    label: 'Username',
-                    // value: widget.data['user']['username'],
-                    value: userdata['username'],
-                  ),
-                  UserDetailItem(
-                    label: 'Email',
-                    value: userdata['email'],
-                  ),
-                  UserDetailItem(
-                    label: 'First Name',
-                    value: userdata['first_name'],
-                  ),
-                  UserDetailItem(
-                    label: 'Last Name',
-                    value: userdata['last_name'],
-                  ),
-                  UserDetailItem(
-                    label: 'Country',
-                    value: userdata['country'],
-                  ),
-                  UserDetailItem(
-                    label: 'State',
-                    value: userdata['state'],
-                  ),
-                  UserDetailItem(
-                    label: 'Profile image',
-                    value: widget.data['user']['image'],
-                  ),
-                ],
-              ),
-            ),
-            Center(
-              child: ElevatedButton(
-              onPressed: () async {
-                final updatedData = await Navigator.push( //push the data to correspondinf fields
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UpdateUserPage(
-                      userId: userID,
-                      token: token,
-                    ),
-                  ),
-                );
-                if (updatedData != null) {
-                  setState(() {
-                    userdata = updatedData;
-                  });
-                }
-              },
-              child: const Text('Update User Details'),
-            ),
-            ),
+//     if (response.statusCode == 200) {
+//       final userDetails = jsonDecode(response.body);
+//       setState(() {
+//         userdata = userDetails;
+//         print("SUCCESS");
+//       });
+//     } else {
+//       setState(() {
+//         print("API ERROR");
+//       });
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text('User Details'),
+//       ),
+//       body: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Container(
+//               alignment: Alignment.center,
+//               margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.2),
+//               child: Column(
+//                 children: [
+//                   UserDetailItem(
+//                     label: 'Username',
+//                     // value: widget.data['user']['username'],
+//                     value: userdata['username'],
+//                   ),
+//                   UserDetailItem(
+//                     label: 'Email',
+//                     value: userdata['email'],
+//                   ),
+//                   UserDetailItem(
+//                     label: 'First Name',
+//                     value: userdata['first_name'],
+//                   ),
+//                   UserDetailItem(
+//                     label: 'Last Name',
+//                     value: userdata['last_name'],
+//                   ),
+//                   UserDetailItem(
+//                     label: 'Country',
+//                     value: userdata['country'],
+//                   ),
+//                   UserDetailItem(
+//                     label: 'State',
+//                     value: userdata['state'],
+//                   ),
+//                   UserDetailItem(
+//                     label: 'Profile image',
+//                     value: widget.data['user']['image'],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             Center(
+//               child: ElevatedButton(
+//               onPressed: () async {
+//                 final updatedData = await Navigator.push( //push the data to correspondinf fields
+//                   context,
+//                   MaterialPageRoute(
+//                     builder: (context) => UpdateUserPage(
+//                       userId: userID,
+//                       token: token,
+//                     ),
+//                   ),
+//                 );
+//                 if (updatedData != null) {
+//                   setState(() {
+//                     userdata = updatedData;
+//                   });
+//                 }
+//               },
+//               child: const Text('Update User Details'),
+//             ),
+//             ),
             
-            const SizedBox(height: 10), //for spacing between the buttons
+//             const SizedBox(height: 10), //for spacing between the buttons
 
-            Center(
-              child:ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Back to Login'),
-            ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-class UpdateUserProfilePage extends StatefulWidget {
-  final String userId;
+//             Center(
+//               child:ElevatedButton(
+//               onPressed: () {
+//                 Navigator.pop(context);
+//               },
+//               child: const Text('Back to Login'),
+//             ),
+//             )
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+// class UpdateUserProfilePage extends StatefulWidget {
+//   final String userId;
 
-  const UpdateUserProfilePage({super.key, required this.userId});
+//   const UpdateUserProfilePage({super.key, required this.userId});
 
-  @override
-  _UpdateUserProfilePageState createState() => _UpdateUserProfilePageState();
-}
+//   @override
+//   _UpdateUserProfilePageState createState() => _UpdateUserProfilePageState();
+// }
 
-class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+// class _UpdateUserProfilePageState extends State<UpdateUserProfilePage> {
+//   final TextEditingController _nameController = TextEditingController();
+//   final TextEditingController _emailController = TextEditingController();
 
-  Future<void> _updateUserProfile() async {
-    final url = 'http://192.168.1.26:8000/user/${widget.userId}/';
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString('token') ?? '';
+//   Future<void> _updateUserProfile() async {
+//     final url = 'http://192.168.1.26:8000/user/${widget.userId}/';
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     String token = prefs.getString('token') ?? '';
 
-    final response = await http.put(
-      Uri.parse(url),
-      body: json.encode({
-        'userId': widget.userId,
-        'name': _nameController.text,
-        'email': _emailController.text,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'token $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      print("Updated");
-    } else {
-      print("changes not done");
-    }
-  }
+//     final response = await http.put(
+//       Uri.parse(url),
+//       body: json.encode({
+//         'userId': widget.userId,
+//         'name': _nameController.text,
+//         'email': _emailController.text,
+//       }),
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': 'token $token',
+//       },
+//     );
+//     if (response.statusCode == 200) {
+//       print("Updated");
+//     } else {
+//       print("changes not done");
+//     }
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Update Profile'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            TextFormField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text('Update Profile'),
+//       ),
+//       body: Padding(
+//         padding: const EdgeInsets.all(20.0),
+//         child: Column(
+//           children: [
+//             TextFormField(
+//               controller: _nameController,
+//               decoration: const InputDecoration(labelText: 'Name'),
+//             ),
+//             TextFormField(
+//               controller: _emailController,
+//               decoration: const InputDecoration(labelText: 'Email'),
+//             ),
             
-            const SizedBox(height: 20.0),
-            ElevatedButton(
-              onPressed: _updateUserProfile,
-              child: const Text('Update Profile'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//             const SizedBox(height: 20.0),
+//             ElevatedButton(
+//               onPressed: _updateUserProfile,
+//               child: const Text('Update Profile'),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
-class UpdateUserPage extends StatefulWidget {
-  final String userId;
-  final String token;
+// class UpdateUserPage extends StatefulWidget {
+//   final String userId;
+//   final String token;
 
-  const UpdateUserPage({super.key, required this.userId, required this.token});
+//   const UpdateUserPage({super.key, required this.userId, required this.token});
 
-  @override
-  State<UpdateUserPage> createState() => _UpdateUserPageState();
-}
+//   @override
+//   State<UpdateUserPage> createState() => _UpdateUserPageState();
+// }
 
-class _UpdateUserPageState extends State<UpdateUserPage> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _countryController = TextEditingController();
-  final TextEditingController _stateController = TextEditingController();
+// class _UpdateUserPageState extends State<UpdateUserPage> {
+//   final TextEditingController _usernameController = TextEditingController();
+//   final TextEditingController _emailController = TextEditingController();
+//   final TextEditingController _firstNameController = TextEditingController();
+//   final TextEditingController _lastNameController = TextEditingController();
+//   final TextEditingController _countryController = TextEditingController();
+//   final TextEditingController _stateController = TextEditingController();
 
-  //pre-fill the fields
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserDetails();
-  }
+//   //pre-fill the fields
+//   @override
+//   void initState() {
+//     super.initState();
+//     _fetchUserDetails();
+//   }
 
-  Future<void> _fetchUserDetails() async {
-    final response = await http.get(
-      Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
-      headers: {
-        'Authorization' : 'token ${widget.token}',
-        'Content-Type' : 'application/json',
-      },
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _usernameController.text = data['username'];
-        _emailController.text = data['email'];
-        _firstNameController.text = data['first_name'];
-        _lastNameController.text = data['last_name'];
-        _countryController.text = data['country'];
-        _stateController.text = data['state'];  
-      });
-    }
-    else {
-      print('failed to fetch user details. Status code : ${response.statusCode}');
-    }
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Update User Details'),
-      ),
-      body: Container(
-        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3, vertical: MediaQuery.of(context).size.width*0.05),
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
-            ),
-            TextFormField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            TextFormField(
-              controller: _firstNameController,
-              decoration: const InputDecoration(labelText: 'First Name'),
-            ),
-            TextFormField(
-              controller: _lastNameController,
-              decoration: const InputDecoration(labelText: 'Last Name'),
-            ),
-            TextFormField(
-              controller: _countryController,
-              decoration: const InputDecoration(labelText: 'Country'),
-            ),
-            TextFormField(
-              controller: _stateController,
-              decoration: const InputDecoration(labelText: 'State'),
-            ),
+//   Future<void> _fetchUserDetails() async {
+//     final response = await http.get(
+//       Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
+//       headers: {
+//         'Authorization' : 'token ${widget.token}',
+//         'Content-Type' : 'application/json',
+//       },
+//     );
+//     if (response.statusCode == 200) {
+//       final data = jsonDecode(response.body);
+//       setState(() {
+//         _usernameController.text = data['username'];
+//         _emailController.text = data['email'];
+//         _firstNameController.text = data['first_name'];
+//         _lastNameController.text = data['last_name'];
+//         _countryController.text = data['country'];
+//         _stateController.text = data['state'];  
+//       });
+//     }
+//     else {
+//       print('failed to fetch user details. Status code : ${response.statusCode}');
+//     }
+//   }
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text('Update User Details'),
+//       ),
+//       body: Container(
+//         margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3, vertical: MediaQuery.of(context).size.width*0.05),
+//         padding: const EdgeInsets.all(20.0),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.center,
+//           children: [
+//             TextFormField(
+//               controller: _usernameController,
+//               decoration: const InputDecoration(labelText: 'Username'),
+//             ),
+//             TextFormField(
+//               controller: _emailController,
+//               decoration: const InputDecoration(labelText: 'Email'),
+//             ),
+//             TextFormField(
+//               controller: _firstNameController,
+//               decoration: const InputDecoration(labelText: 'First Name'),
+//             ),
+//             TextFormField(
+//               controller: _lastNameController,
+//               decoration: const InputDecoration(labelText: 'Last Name'),
+//             ),
+//             TextFormField(
+//               controller: _countryController,
+//               decoration: const InputDecoration(labelText: 'Country'),
+//             ),
+//             TextFormField(
+//               controller: _stateController,
+//               decoration: const InputDecoration(labelText: 'State'),
+//             ),
 
-            const SizedBox(height: 20),
+//             const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: () async {
-                // Retrieve the values entered by the user
-                String username = _usernameController.text.trim();
-                String email = _emailController.text.trim();
-                String firstName = _firstNameController.text.trim();
-                String lastName = _lastNameController.text.trim();
-                String country = _countryController.text.trim();
-                String state = _stateController.text.trim();
+//             ElevatedButton(
+//               onPressed: () async {
+//                 // Retrieve the values entered by the user
+//                 String username = _usernameController.text.trim();
+//                 String email = _emailController.text.trim();
+//                 String firstName = _firstNameController.text.trim();
+//                 String lastName = _lastNameController.text.trim();
+//                 String country = _countryController.text.trim();
+//                 String state = _stateController.text.trim();
                 
-                // Construct the JSON payload
-                Map<String, dynamic> data = {
-                  'username': username,
-                  'email': email,
-                  'first_name': firstName,
-                  'last_name': lastName,
-                  'country': country,
-                  'state': state,
-                };
+//                 // Construct the JSON payload
+//                 Map<String, dynamic> data = {
+//                   'username': username,
+//                   'email': email,
+//                   'first_name': firstName,
+//                   'last_name': lastName,
+//                   'country': country,
+//                   'state': state,
+//                 };
 
-                // Send PUT request to update user details
-                try {
-                  final response = await http.put(
-                    Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': 'token ${widget.token}',
-                    },
-                    body: jsonEncode(data),
-                  );
-                  if (response.statusCode == 200) {
-                    Navigator.pop(context, data);  // sending the updated data to userDetailPage
-                    print("details updated");
-                  } else {
-                    print('Failed to update user details. Status code: ${response.statusCode}');
-                  }
-                } catch (e) {
-                  print('Error updating user details: $e');
-                }
-              },
-              child: const Text('Update'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//                 // Send PUT request to update user details
+//                 try {
+//                   final response = await http.put(
+//                     Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
+//                     headers: {
+//                       'Content-Type': 'application/json',
+//                       'Authorization': 'token ${widget.token}',
+//                     },
+//                     body: jsonEncode(data),
+//                   );
+//                   if (response.statusCode == 200) {
+//                     Navigator.pop(context, data);  // sending the updated data to userDetailPage
+//                     print("details updated");
+//                   } else {
+//                     print('Failed to update user details. Status code: ${response.statusCode}');
+//                   }
+//                 } catch (e) {
+//                   print('Error updating user details: $e');
+//                 }
+//               },
+//               child: const Text('Update'),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 
-class UserDetailItem extends StatelessWidget {
-  final String label;
-  final String value;
-  const UserDetailItem({super.key, required this.label, required this.value});
+// class UserDetailItem extends StatelessWidget {
+//   final String label;
+//   final String value;
+//   const UserDetailItem({super.key, required this.label, required this.value});
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(vertical: 8.0),
+//       child: Row(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Text(
+//             '$label: ',
+//             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//           ),
+//           Expanded(
+//             child: Text(
+//               value,
+//               style: const TextStyle(fontSize: 18),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
