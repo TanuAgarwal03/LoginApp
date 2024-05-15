@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:login_page/userDetailUpdate.dart';
+import 'package:login_page/homePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:login_page/userDetailUpdate.dart';
+import 'homePage.dart'; // Import the HomePage widget
 
 const String baseURL = 'http://192.168.1.26:8000';
 
@@ -16,12 +18,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
   late String userID = '';
   late String token = '';
 
-  late Map<String,dynamic> userdata;
+  late Map<String, dynamic> userdata;
+  int _selectedIndex = 1; // Initially show the UserDetailPage
 
   @override
   void initState() {
     super.initState();
-    _getUserID();    
+    _getUserID();
     userdata = widget.data['user'];
   }
 
@@ -32,65 +35,95 @@ class _UserDetailPageState extends State<UserDetailPage> {
     setState(() {});
     // _fetchUserDetails();
     print(token);
+  }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> _pages = <Widget>[
+      HomePage(),
+      _buildUserDetailPage(context),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Details'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              alignment: Alignment.center,
-              margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.2),
-              child: Column(
-                children: [
-                  UserDetailItem(
-                    label: 'Username',
-                    // value: widget.data['user']['username'],
-                    value: userdata['username'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'Email',
-                    value: userdata['email'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'First Name',
-                    value: userdata['first_name'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'Last Name',
-                    value: userdata['last_name'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'Country',
-                    value: userdata['country'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'State',
-                    value: userdata['state'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'Profile image',
-                    value: userdata['image'] ?? '',
-                  ),
-                  UserDetailItem(
-                    label: 'Date of Birth', 
-                    value: userdata['dob'] ?? 'N/A',
-                  )
-                ],
-              ),
+      body: _pages.elementAt(_selectedIndex),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color.fromARGB(255, 182, 217, 233),
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Profile',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.black,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Widget _buildUserDetailPage(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            alignment: Alignment.center,
+            margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1),
+            child: Column(
+              children: [
+                UserDetailItem(
+                  label: 'Username',
+                  value: userdata['username'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'Email',
+                  value: userdata['email'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'First Name',
+                  value: userdata['first_name'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'Last Name',
+                  value: userdata['last_name'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'Country',
+                  value: userdata['country'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'State',
+                  value: userdata['state'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'Profile image',
+                  value: userdata['image'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'Date of Birth',
+                  value: userdata['dob'] ?? 'N/A',
+                ),
+              ],
             ),
-            Center(
-              child: ElevatedButton(
+          ),
+          Center(
+            child: ElevatedButton(
               onPressed: () async {
-                final updatedData = await Navigator.push( //push the data to corresponding fields
+                final updatedData = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => UpdateUserPage(
@@ -107,48 +140,22 @@ class _UserDetailPageState extends State<UserDetailPage> {
               },
               child: const Text('Update User Details'),
             ),
-            ),
-            
-            const SizedBox(height: 10), //for spacing between the buttons
-
-            Center(
-              child:ElevatedButton(
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
               child: const Text('Back to Login'),
             ),
-            )
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-
-
-  // Future<void> _fetchUserDetails() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String userID = prefs.getString('userId') ?? '';
-
-  //   final response = await http.get(
-  //     Uri.parse('http://192.168.1.26:8000/user/$userID/'),
-  //     headers: {'Authorization': 'token $token'},
-  //   );
-
-  //   if (response.statusCode == 200) {
-  //     final userDetails = jsonDecode(response.body);
-  //     setState(() {
-  //       userdata = userDetails;
-  //       print("SUCCESS");
-  //     });
-  //   } else {
-  //     setState(() {
-  //       print("API ERROR");
-  //     });
-  //   }
-  // }
 class UserDetailItem extends StatelessWidget {
   final String label;
   final String value;
@@ -172,12 +179,12 @@ class UserDetailItem extends StatelessWidget {
           Expanded(
             child: isProfileImage
                 ? value.isNotEmpty
-                    ? Image.network(isValidURL ? value : '$baseURL$value', height: 100, width: 30, fit: BoxFit.cover)
-                    : const Text('No Image Available')  
-            : Text(
-              value,
-              style: const TextStyle(fontSize: 18),
-            ),
+                    ? Image.network(isValidURL ? value : '$baseURL$value', height: 200, width: 10, fit: BoxFit.cover)
+                    : const Text('No Image Available')
+                : Text(
+                    value,
+                    style: const TextStyle(fontSize: 18),
+                  ),
           ),
         ],
       ),
