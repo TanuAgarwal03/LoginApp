@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -101,29 +103,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     }
   }
 
-  // Future<void> _downloadImage(String imageUrl) async {
-  //   try {
-  //     final response = await http.get(Uri.parse(imageUrl));
-  //     if (response.statusCode == 200) {
-  //       final documentDirectory = await getApplicationDocumentsDirectory();
-  //       final file = File('${documentDirectory.path}/profile_image.png');
-  //       file.writeAsBytesSync(response.bodyBytes);
-
-  //       setState(() {
-  //         _image = file;
-  //         _isLoading = false;
-  //       });
-  //     } else {
-  //       print('Failed to download image. Status code : ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error downloading image: $e');
-  //   }
-  // }
-
   Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         p_image = true;
@@ -131,6 +112,40 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       });
     }
   }
+
+  Future<void> _getImageFromCamera() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        p_image = true;
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future showOptions() async {
+  showCupertinoModalPopup(
+    context: context,
+    builder: (context) => CupertinoActionSheet(
+      actions: [
+        CupertinoActionSheetAction(
+          child: const Text('Photo Gallery'),
+          onPressed: () {
+            Navigator.of(context).pop();
+            _pickImage();
+          },
+        ),
+        CupertinoActionSheetAction(
+          child: const Text('Camera'),
+          onPressed: () {
+            Navigator.of(context).pop();
+            _getImageFromCamera();
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   Future<void> _updateUserDetails() async {
     String username = _usernameController.text.trim();
@@ -194,7 +209,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                   children: [
                     Center(
                       child: GestureDetector(
-                        onTap: _pickImage,
+                        onTap: showOptions,
                         child: ClipOval(
                                 child: p_image
                                     ? Image.file(

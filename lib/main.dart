@@ -31,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
+  bool _passwordVisible = false;
 
   Future<void> _saveDataLocally(String userId, String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -75,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       body: Container(
         padding: const EdgeInsets.all(20.0),
-        // margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3),
+        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -94,9 +95,15 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 20.0),
             TextFormField(
               controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
+              obscureText: !_passwordVisible,
+              decoration: InputDecoration(
                 labelText: 'Password',
+              suffixIcon: IconButton(icon: Icon(_passwordVisible ? Icons.visibility : Icons.visibility_off),
+              onPressed: () {
+                setState(() {
+                  _passwordVisible = !_passwordVisible;
+                });
+              },)
               ),
             ),
             const SizedBox(height: 40.0),

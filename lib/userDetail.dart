@@ -68,7 +68,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
         title: const Text('User Details'),
       ),
       
-      body: _pages.elementAt(_selectedIndex),
+      body: SingleChildScrollView(child:_pages.elementAt(_selectedIndex), ),
+      
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 182, 217, 233),
         items: const <BottomNavigationBarItem>[
