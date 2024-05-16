@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
 
       _saveDataLocally(userId, token);
 
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => UserDetailPage(data: data),
@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       body: Container(
         padding: const EdgeInsets.all(20.0),
-        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3),
+        // margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 
 class UpdateUserPage extends StatefulWidget {
   final String userId;
@@ -25,7 +25,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   final TextEditingController _dobController = TextEditingController();
 
   File? _image;
-  
+  var profile;
+  bool p_image = false;
   bool _isLoading = true;
 
   final ImagePicker _picker = ImagePicker();
@@ -54,6 +55,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
         final data = jsonDecode(response.body);
 
         setState(() {
+          _isLoading = false;
           _usernameController.text = data['username'] ?? '';
           _emailController.text = data['email'] ?? '';
           _firstNameController.text = data['first_name'] ?? '';
@@ -62,18 +64,25 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
           _stateController.text = data['state'] ?? '';
           _dobController.text = data['dob'] ?? '';
 
-          _image = data['image'] != null ? File(data['image']) : null;
+          profile = data['image'] != null ? data['image'] : null;
 
-          if (data['image'] != null) {
-            _downloadImage(data['image']);
-          }else {
-            _isLoading = false;
-          }
+          // if (data['image'] != null) {
+          //   // _downloadImage(data['image']);
+          // }else {
+          //   _isLoading = false;
+          // }
         });
       } else {
-        print('Failed to fetch user details. Status code: ${response.statusCode}');
+        setState(() {
+          _isLoading = false;
+        });
+        print(
+            'Failed to fetch user details. Status code: ${response.statusCode}');
       }
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       print('Error fetching user details: $e');
     }
   }
@@ -92,32 +101,32 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     }
   }
 
+  // Future<void> _downloadImage(String imageUrl) async {
+  //   try {
+  //     final response = await http.get(Uri.parse(imageUrl));
+  //     if (response.statusCode == 200) {
+  //       final documentDirectory = await getApplicationDocumentsDirectory();
+  //       final file = File('${documentDirectory.path}/profile_image.png');
+  //       file.writeAsBytesSync(response.bodyBytes);
 
-  Future<void> _downloadImage(String imageUrl) async {
-    try {
-      final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode == 200) {
-        final documentDirectory = await getApplicationDocumentsDirectory();
-        final file = File('${documentDirectory.path}/profile_image.png');
-        file.writeAsBytesSync(response.bodyBytes);
-
-        setState(() {
-          _image = file;
-          _isLoading = false;
-        });
-      } else {
-        print('Failed to download image. Status code : ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error downloading image: $e');
-    }
-  }
-
+  //       setState(() {
+  //         _image = file;
+  //         _isLoading = false;
+  //       });
+  //     } else {
+  //       print('Failed to download image. Status code : ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error downloading image: $e');
+  //   }
+  // }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
+        p_image = true;
         _image = File(pickedFile.path);
       });
     }
@@ -147,8 +156,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       request.fields['dob'] = dob;
 
       if (_image != null) {
-        // String image;
-        request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
+        request.files
+            .add(await http.MultipartFile.fromPath('image', _image!.path));
       }
 
       final response = await request.send();
@@ -156,10 +165,12 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         final updatedData = jsonDecode(responseBody);
-        Navigator.pop(context, updatedData); // Sending the updated data to userDetailPage
+        Navigator.pop(
+            context, updatedData); // Sending the updated data to userDetailPage
         print("Details updated");
       } else {
-        print('Failed to update user details. Status code: ${response.statusCode}');
+        print(
+            'Failed to update user details. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error updating user details: $e');
@@ -183,17 +194,26 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                   children: [
                     Center(
                       child: GestureDetector(
-                      onTap: _pickImage,
-                      child: _image == null
-                          ? const Text('No image selected.')
-                          : ClipOval(
-                            child: Image.file(_image!, height: 100, width: 100 ,fit: BoxFit.cover,),
-                          )
-                          
+                        onTap: _pickImage,
+                        child: ClipOval(
+                                child: p_image
+                                    ? Image.file(
+                                        _image!,
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(
+                                        '$profile',
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                      ),
                     ),
-                    ),  
                     const Center(
-                      child: Text('User Profile') ,
+                      child: Text('User Profile'),
                     ),
                     TextFormField(
                       controller: _usernameController,
@@ -205,7 +225,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                     ),
                     TextFormField(
                       controller: _firstNameController,
-                      decoration: const InputDecoration(labelText: 'First Name'),
+                      decoration:
+                          const InputDecoration(labelText: 'First Name'),
                     ),
                     TextFormField(
                       controller: _lastNameController,
@@ -222,26 +243,17 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                     TextFormField(
                       controller: _dobController,
                       readOnly: true,
-                      onTap: () => _selectDate(context), // Trigger date picker on tap
-                      decoration: const InputDecoration(labelText: 'Date of Birth'),
+                      onTap: () =>
+                          _selectDate(context), // Trigger date picker on tap
+                      decoration:
+                          const InputDecoration(labelText: 'Date of Birth'),
                     ),
-                    
-                    // const Text('Profile image', textAlign: TextAlign.right,) , 
-                    // const Text('Tap on image to choose new file'),
-                    const SizedBox(height:10),   
-                                
-                    // GestureDetector(
-                    //   onTap: _pickImage,
-                    //   child: _image == null
-                    //       ? const Text('No image selected.')
-                    //       : Image.file(_image!, height: 100, width: 100),
-                    // ),
                     const SizedBox(height: 20),
                     Center(
                       child: ElevatedButton(
-                      onPressed: _updateUserDetails,
-                      child: const Text('Update'),
-                    ),
+                        onPressed: _updateUserDetails,
+                        child: const Text('Update'),
+                      ),
                     )
                   ],
                 ),
