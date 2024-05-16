@@ -181,6 +181,20 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: GestureDetector(
+                      onTap: _pickImage,
+                      child: _image == null
+                          ? const Text('No image selected.')
+                          : ClipOval(
+                            child: Image.file(_image!, height: 100, width: 100 ,fit: BoxFit.cover,),
+                          )
+                          
+                    ),
+                    ),  
+                    const Center(
+                      child: Text('User Profile') ,
+                    ),
                     TextFormField(
                       controller: _usernameController,
                       decoration: const InputDecoration(labelText: 'Username'),
@@ -212,15 +226,16 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                       decoration: const InputDecoration(labelText: 'Date of Birth'),
                     ),
                     
-                    const Text('Profile image', textAlign: TextAlign.right,) , 
-                    const Text('Tap on image to choose new file'),
-                    const SizedBox(height:10),                 
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: _image == null
-                          ? const Text('No image selected.')
-                          : Image.file(_image!, height: 100, width: 100),
-                    ),
+                    // const Text('Profile image', textAlign: TextAlign.right,) , 
+                    // const Text('Tap on image to choose new file'),
+                    const SizedBox(height:10),   
+                                
+                    // GestureDetector(
+                    //   onTap: _pickImage,
+                    //   child: _image == null
+                    //       ? const Text('No image selected.')
+                    //       : Image.file(_image!, height: 100, width: 100),
+                    // ),
                     const SizedBox(height: 20),
                     Center(
                       child: ElevatedButton(

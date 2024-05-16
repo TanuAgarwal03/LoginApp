@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:login_page/homePage.dart';
+import 'package:login_page/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/userDetailUpdate.dart';
-import 'homePage.dart'; // Import the HomePage widget
 
 const String baseURL = 'http://192.168.1.26:8000';
 
@@ -17,7 +17,6 @@ class UserDetailPage extends StatefulWidget {
 class _UserDetailPageState extends State<UserDetailPage> {
   late String userID = '';
   late String token = '';
-
   late Map<String, dynamic> userdata;
   int _selectedIndex = 1; // Initially show the UserDetailPage
 
@@ -33,16 +32,30 @@ class _UserDetailPageState extends State<UserDetailPage> {
     userID = prefs.getString('userId') ?? '';
     token = prefs.getString('token') ?? '';
     setState(() {});
-    // _fetchUserDetails();
     print(token);
   }
 
   void _onItemTapped(int index) {
-    setState(() {
+    if(index == 2) {
+      setState(() {
+        _selectedIndex = 1;
+      });
+      _logout();
+    }
+    else{
+      setState(() {
       _selectedIndex = index;
     });
+    } 
   }
 
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacement(
+      context, MaterialPageRoute(builder: (context) => LoginPage())
+    );
+  }
   @override
   Widget build(BuildContext context) {
     List<Widget> _pages = <Widget>[
@@ -54,6 +67,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
       appBar: AppBar(
         title: const Text('User Details'),
       ),
+      
       body: _pages.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 182, 217, 233),
@@ -66,6 +80,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
             icon: Icon(Icons.account_circle),
             label: 'Profile',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.logout),
+            label: 'Logout'
+          )
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.black,
@@ -85,6 +103,24 @@ class _UserDetailPageState extends State<UserDetailPage> {
             margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1),
             child: Column(
               children: [
+                if (userdata['image'] != null && userdata['image'].isNotEmpty)
+            Center(
+              child: ClipOval(
+                child: Image.network(
+                userdata['image'].startsWith('http://') || userdata['image'].startsWith('https://')
+                    ? userdata['image']
+                    : '$baseURL${userdata['image']}',
+                height: 150,
+                width: 150,
+                fit: BoxFit.cover,
+              ),
+              )
+            ),
+            if (userdata['image'] == null || userdata['image'].isEmpty)
+              const Center(
+                child: Text('No Image Available', style: TextStyle(fontSize: 18)),
+              ),
+              const SizedBox(height: 35),
                 UserDetailItem(
                   label: 'Username',
                   value: userdata['username'] ?? '',
@@ -108,10 +144,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 UserDetailItem(
                   label: 'State',
                   value: userdata['state'] ?? '',
-                ),
-                UserDetailItem(
-                  label: 'Profile image',
-                  value: userdata['image'] ?? '',
                 ),
                 UserDetailItem(
                   label: 'Date of Birth',
@@ -142,14 +174,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Back to Login'),
-            ),
-          ),
         ],
       ),
     );
@@ -164,9 +188,6 @@ class UserDetailItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isProfileImage = label == 'Profile image';
-    final bool isValidURL = value.startsWith('http://') || value.startsWith('https://');
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -177,11 +198,7 @@ class UserDetailItem extends StatelessWidget {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           Expanded(
-            child: isProfileImage
-                ? value.isNotEmpty
-                    ? Image.network(isValidURL ? value : '$baseURL$value', height: 200, width: 10, fit: BoxFit.cover)
-                    : const Text('No Image Available')
-                : Text(
+            child: Text(
                     value,
                     style: const TextStyle(fontSize: 18),
                   ),
@@ -191,3 +208,5 @@ class UserDetailItem extends StatelessWidget {
     );
   }
 }
+
+
