@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:login_page/homePage.dart';
-import 'package:login_page/main.dart';
+import 'package:login_page/login.dart';
+// import 'package:login_page/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/userDetailUpdate.dart';
 
@@ -24,7 +25,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
   void initState() {
     super.initState();
     _getUserID();
-    userdata = widget.data['user'];
+    userdata = widget.data['user'] ?? '';
   }
 
   Future<void> _getUserID() async {
@@ -53,13 +54,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.pushReplacement(
-      context, MaterialPageRoute(builder: (context) => LoginPage())
+      context, MaterialPageRoute(builder: (context) => const LoginPage())
     );
   }
   @override
   Widget build(BuildContext context) {
     List<Widget> _pages = <Widget>[
-      HomePage(),
+      const BlogPostsPage(),
       _buildUserDetailPage(context),
     ];
 
@@ -68,7 +69,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
         title: const Text('User Details'),
       ),
       
-      body: SingleChildScrollView(child:_pages.elementAt(_selectedIndex), ),
+      body: SingleChildScrollView(child:_pages.elementAt(_selectedIndex) ),
       
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 182, 217, 233),
