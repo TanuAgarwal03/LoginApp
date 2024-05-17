@@ -166,9 +166,10 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:login_page/home_page.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
-import 'home_page.dart';
+// import 'home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -220,7 +221,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
   static const List<Widget> _widgetOptions = <Widget>[
-    HomePage(),
+    BlogPostsPage(),
     LoginPage(),
   ];
 

@@ -122,21 +122,35 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
   bool _passwordVisible = false;
-  
 
+  void initState() {
+    super.initState();
+    _checkUserDetails();
+  }
+
+  Future<void> _checkUserDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userId = prefs.getString('userId');
+    String? token = prefs.getString('token');
+
+    if(userId!= null && token!=null) {
+      Navigator.push(context, MaterialPageRoute(builder: (context)=>
+      UserDetailPage(token:token , userId :userId)));
+    }
+    
+  }
   Future<void> _saveDataLocally(String userId, String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('userId', userId.trim());
     await prefs.setString('token', token.trim());
   }
 
-
   Future<void> _login() async {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.26:8000/login_api/'),
+      Uri.parse('http://192.168.188.100:8000/login_api/'),
       body: {'username': username, 'password': password},
     );
 
@@ -150,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => UserDetailPage(data: data),
+          builder: (context) => UserDetailPage(token:token , userId :userId),
         ),
       );
     } else {
@@ -160,6 +174,16 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Future<void> _isLoggedIn() async{
+  //   final bool check = await _checkUserDetails();
+
+  // }
+  // Future<bool> _checkUserDetails() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String? userId = prefs.getString('userId');
+  //   String? token = prefs.getString('token');
+  //   return userId != null && token != null;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -209,24 +233,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
-  // void initState(){
-  //   super.initState();
-  //   _checkUserDetails();
-  // }
-  // Future<void> _checkUserDetails() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String? userId = prefs.getString('userId');
-  //   String? token = prefs.getString('token');
-  // }
-
-  // Future<void> _isLoggedIn() async{
-  //   final bool check = await _checkUserDetails();
-
-  // }
-  // Future<bool> _checkUserDetails() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String? userId = prefs.getString('userId');
-  //   String? token = prefs.getString('token');
-  //   return userId != null && token != null;
-  // }
