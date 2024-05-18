@@ -244,10 +244,11 @@ import 'package:flutter/material.dart';
 import 'package:login_page/home_page.dart';
 import 'package:login_page/login.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/userDetailUpdate.dart';
 
-const String baseURL = 'http://192.168.188.100:8000';
+const String baseURL = 'http://192.168.124.100:8000';
 
 class UserDetailPage extends StatefulWidget {
   final dynamic token;
@@ -304,9 +305,9 @@ class _UserDetailPageState extends State<UserDetailPage> {
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      MaterialPageRoute(builder: (context) => const MainPage()),
     );
   }
 

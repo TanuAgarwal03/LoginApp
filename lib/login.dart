@@ -150,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
     String password = _passwordController.text.trim();
 
     final response = await http.post(
-      Uri.parse('http://192.168.188.100:8000/login_api/'),
+      Uri.parse('http://192.168.124.100:8000/login_api/'),
       body: {'username': username, 'password': password},
     );
 

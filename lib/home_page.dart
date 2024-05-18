@@ -66,7 +66,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     });
 
     final response = await http.get(
-      Uri.parse('http://192.168.188.100:8000/posts/'),
+      Uri.parse('http://192.168.124.100:8000/posts/'),
       headers: {
         'Authorization': 'Token $token',
       },
@@ -95,7 +95,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     } else if (_hasError) {
       return Scaffold(
         appBar: AppBar(title: const Text('Blog Posts')),
-        body: const Center(child: Text('Failed to load posts')),
+        body: const Center(child: Text('Failed to load posts\nLogin to see the posts')),
       );
     } else {
       return Scaffold(
@@ -112,11 +112,11 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
               return ListTile(
                 leading: post['image'] != null && post['image'].isNotEmpty
                     ? Image.network(
-                        post['image'].startsWith('http://') || post['image'].startsWith('https://')
+                      post['image'].startsWith('http://') || post['image'].startsWith('https://')
                             ? post['image']
                             : 'http://192.168.188.100:8000${post['image']}',
-                        width: 50,
-                        height: 50,
+                        width: 100,
+                        height: 100,
                         fit: BoxFit.cover,
                       )
                     : const Icon(Icons.image, size: 50),
