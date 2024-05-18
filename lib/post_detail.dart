@@ -17,9 +17,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Map<String, dynamic>? _post;
   String token = '';
 
+  Map<int, String> _categoryMap = {};
+
   @override
   void initState() {
     super.initState();
+    _fetchCategories();
     _fetchPostDetail();
   }
 
@@ -30,96 +33,125 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _isLoading = true;
       _hasError = false;
     });
-  try{
-    final response = await http.get(
-      Uri.parse('http://192.168.1.26:8000/posts/${widget.postId}/'),
-      headers: {
-        'Authorization': 'Token $token',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.1.26:8000/posts/${widget.postId}/'),
+        headers: {
+          'Authorization': 'Token $token',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      setState(() {
-        _post = json.decode(response.body);
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        print('Error loading post detail');
-      });
-    }
-  } catch (e) {
+      if (response.statusCode == 200) {
+        setState(() {
+          _post = json.decode(response.body);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          print('Error loading post detail');
+        });
+      }
+    } catch (e) {
       setState(() {
         _isLoading = false;
         _hasError = true;
         print('Exception occurred: $e');
       });
     }
-
   }
-    
+
+  Future<void> _fetchCategories() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    final response = await http.get(
+      Uri.parse('http://192.168.1.26:8000/category/'),
+      headers: {'Authorization': 'Token $token'},
+    );
+    if (response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = json.decode(response.body);
+      List categories = jsonResponse['results'];
+      setState(() {
+        _categoryMap = {
+          for (var category in categories) category['id']: category['title']
+        };
+        _isLoading = false;
+      });
+      print(_categoryMap);
+    } else {
+      throw Exception('Failed to load categories');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Post Detail')),
-        body: const Center(
-          child: CircularProgressIndicator()
-          ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     } else if (_hasError) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Post Detail')
-          ),
-        body: const Center(
-          child: Text('Failed to load post details')
-          ),
+        appBar: AppBar(title: const Text('Post Detail')),
+        body: const Center(child: Text('Failed to load post details')),
       );
     } else {
       return Scaffold(
-        appBar: AppBar(title: const Text('Post Detail')),
-        body: SingleChildScrollView(
-          child: _post != null
-            ? Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_post!['title'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(25),
-                      child:  Center(child: _post!['featured_image'] != null && _post!['featured_image'].isNotEmpty
-                        ? Image.network(
-                            _post!['featured_image'].startsWith('http://') || _post!['featured_image'].startsWith('https://')
-                                ? _post!['featured_image']
-                                : 'http://192.168.1.26:8000${_post!['featured_image']}',
-                          )
-                        : const Icon(Icons.image, size: 50)),
+          appBar: AppBar(title: const Text('Post Detail')),
+          body: SingleChildScrollView(
+            child: _post != null
+                ? Padding(
+                    padding: const EdgeInsets.all(22),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_post!['title'],
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(25),
+                          child: Center(
+                              child: _post!['featured_image'] != null &&
+                                      _post!['featured_image'].isNotEmpty
+                                  ? Image.network(
+                                      _post!['featured_image']
+                                                  .startsWith('http://') ||
+                                              _post!['featured_image']
+                                                  .startsWith('https://')
+                                          ? _post!['featured_image']
+                                          : 'http://192.168.1.26:8000${_post!['featured_image']}',
+                                    )
+                                  : const Icon(Icons.image, size: 50)),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _post!['text'],
+                          style: const TextStyle(fontSize: 16),
+                          textAlign: TextAlign.justify,
+                        ),
+                        const SizedBox(height: 10),
+                        Text('Author: ${_post!['author']}',
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 5),
+                        Text('Created Date: ${_post!['created_date']}',
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 5),
+                        Text('Published Date: ${_post!['published_date']}',
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 5),
+                        Text('Tags: ${_post!['tags']}',
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 5),
+                        Text('Category: ${_categoryMap[_post!['category']]}',
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 5),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    Text(_post!['text'], style: const TextStyle(fontSize: 16) , textAlign: TextAlign.justify,),
-                    const SizedBox(height: 10),
-                    Text('Author: ${_post!['author']}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 5),
-                    Text('Created Date: ${_post!['created_date']}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 5),
-                    Text('Published Date: ${_post!['published_date']}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 5),
-                    Text('Tags: ${_post!['tags']}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 5),
-                    Text('Category: ${_post!['category']}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 5),
-                  ],
-
-                ),
-              )
-            : const Center(child: Text('Post not found')),) 
-      );
+                  )
+                : const Center(child: Text('Post not found')),
+          ));
     }
   }
 }
