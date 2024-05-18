@@ -45,7 +45,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.124.100:8000/user/${widget.userId}/'),
+        Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
         headers: {
           'Authorization': 'token ${widget.token}',
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     try {
       var request = http.MultipartRequest(
         'PATCH',
-        Uri.parse('http://192.168.124.100:8000/user/${widget.userId}/'),
+        Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
       );
       request.headers['Authorization'] = 'token ${widget.token}';
       request.fields['username'] = username;
