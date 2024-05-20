@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PostDetailPage extends StatefulWidget {
   final int postId;
-  const PostDetailPage({super.key, required this.postId});
+  final String postTitle;
+  const PostDetailPage({super.key, required this.postId, required this.postTitle});
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -16,23 +17,37 @@ class _PostDetailPageState extends State<PostDetailPage> {
   bool _hasError = false;
   Map<String, dynamic>? _post;
   String token = '';
+  // String username = '';
 
   Map<int, String> _categoryMap = {};
   Map<int , String> _tagMap = {};
   Map<int, String> _author = {};
+  List<dynamic> _comments = [];
+
+  final TextEditingController _commentController = TextEditingController();
+
 
   @override
   void initState() {
     super.initState();
+    // _loadUserDetails();
     _fetchCategories();
     _fetchTags();
     _fetchAuthorDetails();
     _fetchPostDetail();
+    _fetchComments();
   }
 
-  Future<void> _fetchPostDetail() async {
+  // Future<void> _loadUserDetails() async {
+  // SharedPreferences prefs = await SharedPreferences.getInstance();
+  // token = prefs.getString('token') ?? '';
+  // username = prefs.getString('userId') ?? ''; // Retrieve the username
+  // }
+
+Future<void> _fetchPostDetail() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
+    _fetchComments();
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -140,6 +155,67 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  Future<void> _fetchComments() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    setState(() {
+      _isLoading = true;
+    });
+    final response = await http.get(
+      Uri.parse('http://192.168.1.26:8000/comments/'),
+      headers: {'Authorization': 'Token $token'},
+    );
+    print(widget.postId);
+    print(widget.postTitle);
+    if (response.statusCode == 200) {
+      List<dynamic> allComments = json.decode(response.body)['results'];
+      
+      List<dynamic> postComments = allComments.where((comment) => comment['post']['title'] == widget.postTitle).toList();
+      
+      setState(() {
+        _comments = postComments;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      throw Exception('Failed to load comments');
+    }
+  }
+
+
+  Future<void> _addComment(String commentText) async {
+    setState(() {
+      _isLoading = true;
+    });
+    final response = await http.post(
+      Uri.parse('http://192.168.1.26:8000/comments/'),
+      headers: {
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'body': commentText,
+        'post_id': widget.postId,
+        // 'name': prefs.getString('username'),
+        'name': 'admin',
+      }),
+    );
+    if (response.statusCode == 201) {
+      setState(() {
+        _isLoading = false;
+      });
+      _fetchComments(); 
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      throw Exception('Failed to add comment');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -203,6 +279,37 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         Text('Category: ${_categoryMap[_post!['category']]}',
                             style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 5),
+                        const Text('Comments:' , style: TextStyle(fontWeight: FontWeight.bold)),
+
+                        _comments.isNotEmpty
+                            ? ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: _comments.length,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(_comments[index]['body']),
+                                    subtitle: Text(
+                                        'By ${_comments[index]['name']} at ${_comments[index]['created']} '),
+                                  );
+                                },
+                              )
+                            : const Text('No comments yet'),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _commentController,
+                          decoration: const InputDecoration(labelText: 'Add a comment..'),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (_commentController.text.isNotEmpty) {
+                              await _addComment(_commentController.text);
+                              _commentController.clear();
+                            }
+                          },
+                          child: const Text('Submit'),
+                        ),
+               
                       ],
                     ),
                   )
