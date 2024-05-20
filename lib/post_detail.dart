@@ -18,11 +18,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String token = '';
 
   Map<int, String> _categoryMap = {};
+  Map<int , String> _tagMap = {};
+  Map<int, String> _author = {};
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
+    _fetchTags();
+    _fetchAuthorDetails();
     _fetchPostDetail();
   }
 
@@ -84,6 +88,58 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  Future<void> _fetchTags() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    final response = await http.get(
+      Uri.parse('http://192.168.1.26:8000/tags/'),
+      headers: {'Authorization' : 'Token $token'},
+    );
+    if (response.statusCode==200) {
+      Map<String, dynamic> jsonResponse = json.decode(response.body);
+      List tags = jsonResponse['results'];
+      print('Tags list: $tags');
+      setState(() {
+        _tagMap = {
+          for (var tag in tags) tag['id']: tag['title']
+        };
+        _isLoading = false;
+      });
+      print(_tagMap);
+    } else {
+      throw Exception('Failed to load tags');
+    }
+  }
+
+  String _getTagTitles(List<dynamic> tagIds) {
+  List<String> tagTitles = tagIds.map((id) {
+    return _tagMap[id] ?? '';
+  }).toList();
+    return tagTitles.join(', ');
+  }
+
+  Future<void> _fetchAuthorDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    final response = await http.get(
+      Uri.parse('http://192.168.1.26:8000/user/'),
+      headers: {'Authorization' : 'Token $token'},
+    );
+    if (response.statusCode==200) {
+      Map<String, dynamic> jsonResponse = json.decode(response.body);
+      List users = jsonResponse['results'];
+      setState(() {
+        _author = {
+          for (var user in users) user['id']: user['username']
+        };
+        _isLoading = false;
+      });
+      print(_author);
+    } else {
+      throw Exception('Failed to load author');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -132,7 +188,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           textAlign: TextAlign.justify,
                         ),
                         const SizedBox(height: 10),
-                        Text('Author: ${_post!['author']}',
+                        Text('Author: ${_author[_post!['author']]}',
                             style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 5),
                         Text('Created Date: ${_post!['created_date']}',
@@ -141,7 +197,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         Text('Published Date: ${_post!['published_date']}',
                             style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 5),
-                        Text('Tags: ${_post!['tags']}',
+                        Text('Tags: ${_getTagTitles(_post!['tags'])}',
                             style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 5),
                         Text('Category: ${_categoryMap[_post!['category']]}',
