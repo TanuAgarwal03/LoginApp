@@ -27,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
     String? token = prefs.getString('token');
+    String? username = prefs.getString('username');
 
     if(userId!= null && token!=null) {
       Navigator.push(context, MaterialPageRoute(builder: (context)=>
@@ -35,10 +36,11 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
   
-  Future<void> _saveDataLocally(String userId, String token) async {
+  Future<void> _saveDataLocally(String userId, String token ,String username) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('userId', userId.trim());
     await prefs.setString('token', token.trim());
+    await prefs.setString('username', username.trim());
   }
 
   Future<void> _login() async {
@@ -55,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
       String userId = data['user']['id'].toString();
       String token = data['user']['token'];
 
-      _saveDataLocally(userId, token);
+      _saveDataLocally(userId, token,username);
 
       Navigator.pushReplacement(
         context,

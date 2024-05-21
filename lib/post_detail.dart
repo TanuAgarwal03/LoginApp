@@ -6,7 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PostDetailPage extends StatefulWidget {
   final int postId;
   final String postTitle;
-  const PostDetailPage({super.key, required this.postId, required this.postTitle});
+  const PostDetailPage(
+      {super.key, required this.postId, required this.postTitle});
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -17,20 +18,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
   bool _hasError = false;
   Map<String, dynamic>? _post;
   String token = '';
-  // String username = '';
+  String username = '';
 
   Map<int, String> _categoryMap = {};
-  Map<int , String> _tagMap = {};
+  Map<int, String> _tagMap = {};
   Map<int, String> _author = {};
   List<dynamic> _comments = [];
 
   final TextEditingController _commentController = TextEditingController();
 
-
   @override
   void initState() {
     super.initState();
-    // _loadUserDetails();
+    _loadUserDetails();
     _fetchCategories();
     _fetchTags();
     _fetchAuthorDetails();
@@ -38,13 +38,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
     _fetchComments();
   }
 
-  // Future<void> _loadUserDetails() async {
-  // SharedPreferences prefs = await SharedPreferences.getInstance();
-  // token = prefs.getString('token') ?? '';
-  // username = prefs.getString('userId') ?? ''; // Retrieve the username
-  // }
+  Future<void> _loadUserDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    username = prefs.getString('username') ?? ''; // Retrieve the username
+  }
 
-Future<void> _fetchPostDetail() async {
+  Future<void> _fetchPostDetail() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
     _fetchComments();
@@ -97,7 +97,6 @@ Future<void> _fetchPostDetail() async {
         };
         _isLoading = false;
       });
-      print(_categoryMap);
     } else {
       throw Exception('Failed to load categories');
     }
@@ -108,28 +107,24 @@ Future<void> _fetchPostDetail() async {
     token = prefs.getString('token') ?? '';
     final response = await http.get(
       Uri.parse('http://192.168.1.26:8000/tags/'),
-      headers: {'Authorization' : 'Token $token'},
+      headers: {'Authorization': 'Token $token'},
     );
-    if (response.statusCode==200) {
+    if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);
       List tags = jsonResponse['results'];
-      print('Tags list: $tags');
       setState(() {
-        _tagMap = {
-          for (var tag in tags) tag['id']: tag['title']
-        };
+        _tagMap = {for (var tag in tags) tag['id']: tag['title']};
         _isLoading = false;
       });
-      print(_tagMap);
     } else {
       throw Exception('Failed to load tags');
     }
   }
 
   String _getTagTitles(List<dynamic> tagIds) {
-  List<String> tagTitles = tagIds.map((id) {
-    return _tagMap[id] ?? '';
-  }).toList();
+    List<String> tagTitles = tagIds.map((id) {
+      return _tagMap[id] ?? '';
+    }).toList();
     return tagTitles.join(', ');
   }
 
@@ -138,18 +133,15 @@ Future<void> _fetchPostDetail() async {
     token = prefs.getString('token') ?? '';
     final response = await http.get(
       Uri.parse('http://192.168.1.26:8000/user/'),
-      headers: {'Authorization' : 'Token $token'},
+      headers: {'Authorization': 'Token $token'},
     );
-    if (response.statusCode==200) {
+    if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);
       List users = jsonResponse['results'];
       setState(() {
-        _author = {
-          for (var user in users) user['id']: user['username']
-        };
+        _author = {for (var user in users) user['id']: user['username']};
         _isLoading = false;
       });
-      print(_author);
     } else {
       throw Exception('Failed to load author');
     }
@@ -165,13 +157,13 @@ Future<void> _fetchPostDetail() async {
       Uri.parse('http://192.168.1.26:8000/comments/'),
       headers: {'Authorization': 'Token $token'},
     );
-    print(widget.postId);
-    print(widget.postTitle);
     if (response.statusCode == 200) {
       List<dynamic> allComments = json.decode(response.body)['results'];
-      
-      List<dynamic> postComments = allComments.where((comment) => comment['post']['title'] == widget.postTitle).toList();
-      
+
+      List<dynamic> postComments = allComments
+          .where((comment) => comment['post']['title'] == widget.postTitle)
+          .toList();
+
       setState(() {
         _comments = postComments;
         _isLoading = false;
@@ -183,7 +175,6 @@ Future<void> _fetchPostDetail() async {
       throw Exception('Failed to load comments');
     }
   }
-
 
   Future<void> _addComment(String commentText) async {
     setState(() {
@@ -199,14 +190,14 @@ Future<void> _fetchPostDetail() async {
         'body': commentText,
         'post_id': widget.postId,
         // 'name': prefs.getString('username'),
-        'name': 'admin',
+        'name': username,
       }),
     );
     if (response.statusCode == 201) {
       setState(() {
         _isLoading = false;
       });
-      _fetchComments(); 
+      _fetchComments();
     } else {
       setState(() {
         _isLoading = false;
@@ -214,7 +205,6 @@ Future<void> _fetchPostDetail() async {
       throw Exception('Failed to add comment');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -279,8 +269,8 @@ Future<void> _fetchPostDetail() async {
                         Text('Category: ${_categoryMap[_post!['category']]}',
                             style: const TextStyle(fontSize: 16)),
                         const SizedBox(height: 5),
-                        const Text('Comments:' , style: TextStyle(fontWeight: FontWeight.bold)),
-
+                        const Text('Comments:',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         _comments.isNotEmpty
                             ? ListView.builder(
                                 shrinkWrap: true,
@@ -297,7 +287,8 @@ Future<void> _fetchPostDetail() async {
                         const SizedBox(height: 20),
                         TextField(
                           controller: _commentController,
-                          decoration: const InputDecoration(labelText: 'Add a comment..'),
+                          decoration: const InputDecoration(
+                              labelText: 'Add a comment..'),
                         ),
                         const SizedBox(height: 10),
                         ElevatedButton(
@@ -309,7 +300,6 @@ Future<void> _fetchPostDetail() async {
                           },
                           child: const Text('Submit'),
                         ),
-               
                       ],
                     ),
                   )
