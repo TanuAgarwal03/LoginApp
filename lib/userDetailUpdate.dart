@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-// import 'package:path_provider/path_provider.dart';
 
 class UpdateUserPage extends StatefulWidget {
   final String userId;
@@ -21,10 +20,12 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _countryController = TextEditingController();
-  final TextEditingController _stateController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _statusController = TextEditingController();
+  final TextEditingController _marriedController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
 
+  String? _selectedGender;
   File? _image;
   var profile;
   bool p_image = false;
@@ -45,7 +46,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
+        Uri.parse('http://3.110.219.27:8005/stapi/v1/profile/${widget.userId}/'),
         headers: {
           'Authorization': 'token ${widget.token}',
           'Content-Type': 'application/json',
@@ -61,24 +62,21 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
           _emailController.text = data['email'] ?? '';
           _firstNameController.text = data['first_name'] ?? '';
           _lastNameController.text = data['last_name'] ?? '';
-          _countryController.text = data['country'] ?? '';
-          _stateController.text = data['state'] ?? '';
+          // _countryController.text = data['country'] ?? '';
+          // _stateController.text = data['state'] ?? '';
           _dobController.text = data['dob'] ?? '';
+          _statusController.text = data['status'] ?? '';
+          _selectedGender = data['gender'];
+          _marriedController.text = data['married'].toString();
+          _mobileController.text = data['mobile'].toString();
 
           profile = data['image'] != null ? data['image'] : null;
-
-          // if (data['image'] != null) {
-          //   // _downloadImage(data['image']);
-          // }else {
-          //   _isLoading = false;
-          // }
         });
       } else {
         setState(() {
           _isLoading = false;
         });
-        print(
-            'Failed to fetch user details. Status code: ${response.statusCode}');
+        print('Failed to fetch user details. Status code: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
@@ -123,55 +121,60 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   }
 
   Future showOptions() async {
-  showCupertinoModalPopup(
-    context: context,
-    builder: (context) => CupertinoActionSheet(
-      actions: [
-        CupertinoActionSheetAction(
-          child: const Text('Photo Gallery'),
-          onPressed: () {
-            Navigator.of(context).pop();
-            _pickImage();
-          },
-        ),
-        CupertinoActionSheetAction(
-          child: const Text('Camera'),
-          onPressed: () {
-            Navigator.of(context).pop();
-            _getImageFromCamera();
-          },
-        ),
-      ],
-    ),
-  );
-}
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Text('Photo Gallery'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _pickImage();
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Camera'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _getImageFromCamera();
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _updateUserDetails() async {
     String username = _usernameController.text.trim();
     String email = _emailController.text.trim();
     String firstName = _firstNameController.text.trim();
     String lastName = _lastNameController.text.trim();
-    String country = _countryController.text.trim();
-    String state = _stateController.text.trim();
+    String status = _statusController.text.trim();
+    // String state = _stateController.text.trim();
     String dob = _dobController.text.trim();
+    String gender = _selectedGender ?? '';
+    String married = _marriedController.text.trim();
+    String mobile = _mobileController.text.trim();
 
     try {
       var request = http.MultipartRequest(
         'PATCH',
-        Uri.parse('http://192.168.1.26:8000/user/${widget.userId}/'),
+        Uri.parse('http://3.110.219.27:8005/stapi/v1/profile/${widget.userId}/'),
       );
       request.headers['Authorization'] = 'token ${widget.token}';
       request.fields['username'] = username;
       request.fields['email'] = email;
       request.fields['first_name'] = firstName;
       request.fields['last_name'] = lastName;
-      request.fields['country'] = country;
-      request.fields['state'] = state;
+      request.fields['status'] = status;
+      // request.fields['state'] = state;
       request.fields['dob'] = dob;
+      request.fields['gender'] = gender;
+      request.fields['married'] = married;
+      request.fields['mobile'] = mobile;
 
       if (_image != null) {
-        request.files
-            .add(await http.MultipartFile.fromPath('image', _image!.path));
+        request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
       }
 
       final response = await request.send();
@@ -179,12 +182,10 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         final updatedData = jsonDecode(responseBody);
-        Navigator.pop(
-            context, updatedData); // Sending the updated data to userDetailPage
+        Navigator.pop(context, updatedData); // Sending the updated data to userDetailPage
         print("Details updated");
       } else {
-        print(
-            'Failed to update user details. Status code: ${response.statusCode}');
+        print('Failed to update user details. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error updating user details: $e');
@@ -200,7 +201,6 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator()) // Display loader
           : Container(
-              // margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.3),
               padding: const EdgeInsets.all(20.0),
               child: SingleChildScrollView(
                 child: Column(
@@ -210,20 +210,20 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                       child: GestureDetector(
                         onTap: showOptions,
                         child: ClipOval(
-                                child: p_image
-                                    ? Image.file(
-                                        _image!,
-                                        height: 100,
-                                        width: 100,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.network(
-                                        '$profile',
-                                        height: 100,
-                                        width: 100,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
+                          child: p_image
+                              ? Image.file(
+                                  _image!,
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.network(
+                                  '$profile',
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
                       ),
                     ),
                     const Center(
@@ -239,28 +239,44 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                     ),
                     TextFormField(
                       controller: _firstNameController,
-                      decoration:
-                          const InputDecoration(labelText: 'First Name'),
+                      decoration: const InputDecoration(labelText: 'First Name'),
                     ),
                     TextFormField(
                       controller: _lastNameController,
                       decoration: const InputDecoration(labelText: 'Last Name'),
                     ),
                     TextFormField(
-                      controller: _countryController,
-                      decoration: const InputDecoration(labelText: 'Country'),
-                    ),
-                    TextFormField(
-                      controller: _stateController,
-                      decoration: const InputDecoration(labelText: 'State'),
-                    ),
-                    TextFormField(
                       controller: _dobController,
                       readOnly: true,
-                      onTap: () =>
-                          _selectDate(context), // Trigger date picker on tap
-                      decoration:
-                          const InputDecoration(labelText: 'Date of Birth'),
+                      onTap: () => _selectDate(context), // Trigger date picker on tap
+                      decoration: const InputDecoration(labelText: 'Date of Birth'),
+                    ),
+                    TextFormField(
+                      controller: _statusController,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      items: const [
+                        DropdownMenuItem(value: 'Male', child: Text('Male')),
+                        DropdownMenuItem(value: 'Female', child: Text('Female')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGender = value;
+                        });
+                      },
+                      decoration: const InputDecoration(labelText: 'Gender'),
+                    ),
+                    TextFormField(
+                      controller: _marriedController,
+                      decoration: const InputDecoration(
+                        labelText: 'Married',
+                      ),
+                    ),
+                    TextFormField(
+                      controller: _mobileController,
+                      decoration: const InputDecoration(labelText: 'Contact'),
                     ),
                     const SizedBox(height: 20),
                     Center(
@@ -268,7 +284,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                         onPressed: _updateUserDetails,
                         child: const Text('Update'),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -276,7 +292,3 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     );
   }
 }
-
-
-
-//for image picker -Multipart is used , pickImage(source), 

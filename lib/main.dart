@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:login_page/home_page.dart';
+import 'package:login_page/polls.dart';
+// import 'package:login_page/polls.dart';
 import 'package:login_page/userDetail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
@@ -33,23 +35,23 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
-  static const List<Widget> _widgetOptions = <Widget>[
-    BlogPostsPage(),
-    UserDetailPage(userId: 'userId', token: 'token'),
-    // LoginPage(),
+
+  final List<Widget> _widgetOptions = <Widget>[
+    const PollPage(token: 'token'),
+    const UserDetailPage(userId: 'userId', token: 'token'),
+    // PollPage(),  // Added PollsPage
+    const LoginPage(),
   ];
 
   static const List<String> _appBarTitles = ['Blog Posts', 'User Detail', 'Login'];
 
-
   void _onItemTapped(int index) {
-    if(index ==2){
+    if(index == 2) {
       _logout();
-    }
-     else{
+    } else {
       setState(() {
-      _selectedIndex = index;
-    });
+        _selectedIndex = index;
+      });
     }
   }
 
@@ -68,6 +70,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_appBarTitles[_selectedIndex]), 
+        backgroundColor: Colors.lightBlue[50],
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
@@ -82,15 +85,20 @@ class _MainPageState extends State<MainPage> {
             icon: Icon(Icons.account_circle_outlined),
             label: 'UserDetail',
           ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.poll),
+          //   label: 'Polls',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.logout),
-            label: 'Logout')
+            label: 'Logout',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[800],
+        backgroundColor: Colors.lightBlue[50],
         onTap: _onItemTapped,
       ),
     );
   }
 }
-

@@ -17,11 +17,15 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
   bool _passwordVisible = false;
+  
+  String _selectedFcmType = 'android';
 
   void initState() {
     super.initState();
     _checkUserDetails();
   }
+
+  List<String> _fcmTypes = ['android', 'ios'];
 
   Future<void> _checkUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -31,7 +35,6 @@ class _LoginPageState extends State<LoginPage> {
 
     if(userId!= null && token!=null) {
       Navigator.push(context, MaterialPageRoute(builder: (context)=>
-      // UserDetailPage(token:token , userId :userId)));
       MainPage(token: token , userId: userId)));
     }
   }
@@ -46,18 +49,19 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _login() async {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
+    _selectedFcmType = 'android';
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.26:8000/login_api/'),
-      body: {'username': username, 'password': password},
+      Uri.parse('http://3.110.219.27:8005/stapi/v1/login/'),
+      body: {'username': username, 'password': password, 'fcm_type': _selectedFcmType},
     );
 
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      String userId = data['user']['id'].toString();
-      String token = data['user']['token'];
+      String userId = data['id'].toString();
+      String token = data['token'];
 
-      _saveDataLocally(userId, token,username);
+      _saveDataLocally(userId, token , username);
 
       Navigator.pushReplacement(
         context,
@@ -108,6 +112,24 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 20.0),
+            // DropdownButtonFormField<String>(
+            //   value: _selectedFcmType,
+            //   onChanged: (String? value) {
+            //     setState(() {
+            //       _selectedFcmType = value!;
+            //     });
+            //   },
+            //   items: _fcmTypes.map((String fcmType) {
+            //     return DropdownMenuItem<String>(
+            //       value: fcmType,
+            //       child: Text(fcmType),
+            //     );
+            //   }).toList(),
+            //   decoration: const InputDecoration(
+            //     labelText: 'FCM Type',
+            //   ),
+            // ),
             const SizedBox(height: 40.0),
             ElevatedButton(
               onPressed: _login,

@@ -1,12 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-// import 'package:login_page/login.dart';
-// import 'package:login_page/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/userDetailUpdate.dart';
 
-const String baseURL = 'http://192.168.1.26:8000';
 
 class UserDetailPage extends StatefulWidget {
   final dynamic token;
@@ -20,8 +17,9 @@ class UserDetailPage extends StatefulWidget {
 class _UserDetailPageState extends State<UserDetailPage> {
   late String userID;
   late String token;
-  var userdata = Map<String, dynamic>();
+  Map userdata = {};
 
+  
   @override
   void initState() {
     super.initState();
@@ -34,9 +32,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? token;
     userID = prefs.getString('userId') ?? userID;
-
-    final response = await http.get(
-      Uri.parse('$baseURL/user/$userID/'),
+    
+    final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/profile/'),
       headers: {
         'Authorization': 'Token $token',
       },
@@ -44,22 +41,14 @@ class _UserDetailPageState extends State<UserDetailPage> {
 
     if (response.statusCode == 200) {
       setState(() {
-        userdata = jsonDecode(response.body);
+        userdata = jsonDecode(response.body)['results'][0];
       });
+      
     }
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('User Details'),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.logout),
-        //     // onPressed: _logout,
-        //   ),
-        // ],
-      // ),
       body: SingleChildScrollView(
         child: _buildUserDetailPage(context),
       ),
@@ -76,16 +65,19 @@ class _UserDetailPageState extends State<UserDetailPage> {
             alignment: Alignment.center,
             margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1),
             child: Column(
+              
+
               children: [
+                SizedBox(height: 20.0),
                 if (userdata['image'] != null && userdata['image'].isNotEmpty)
                   Center(
                     child: ClipOval(
                       child: Image.network(
                         userdata['image'].startsWith('http://') || userdata['image'].startsWith('https://')
                             ? userdata['image']
-                            : '$baseURL${userdata['image']}',
-                        height: 150,
-                        width: 150,
+                            : 'http://3.110.219.27:8005/stapi/v1/profile/${userdata['image']}',
+                        height: 100,
+                        width: 100,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -97,11 +89,11 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 const SizedBox(height: 35),
                 UserDetailItem(
                   label: 'Username',
-                  value: userdata['username'] ?? '',
+                  value: userdata['username'],
                 ),
                 UserDetailItem(
                   label: 'Email',
-                  value: userdata['email'] ?? '',
+                  value: userdata['email'],
                 ),
                 UserDetailItem(
                   label: 'First Name',
@@ -112,17 +104,25 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   value: userdata['last_name'] ?? '',
                 ),
                 UserDetailItem(
-                  label: 'Country',
-                  value: userdata['country'] ?? '',
-                ),
-                UserDetailItem(
-                  label: 'State',
-                  value: userdata['state'] ?? '',
+                  label: 'Status',
+                  value: userdata['status'] ?? '',
                 ),
                 UserDetailItem(
                   label: 'Date of Birth',
-                  value: userdata['dob'] ?? 'N/A',
+                  value: userdata['dob'] ?? '',
                 ),
+                UserDetailItem(
+                  label: 'Gender',
+                  value: userdata['gender'] ?? '',
+                ),
+                UserDetailItem(
+                  label: 'Married',
+                  value: userdata['married'].toString(),
+                ),
+                UserDetailItem(
+                  label: 'Contact',
+                  value: userdata['mobile'].toString(),
+                  ),
               ],
             ),
           ),
@@ -159,7 +159,7 @@ class UserDetailItem extends StatelessWidget {
   final String value;
 
   const UserDetailItem({super.key, required this.label, required this.value});
-
+  
   @override
   Widget build(BuildContext context) {
     return Padding(
