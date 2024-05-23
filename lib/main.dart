@@ -37,7 +37,7 @@ class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
   final List<Widget> _widgetOptions = <Widget>[
-    const PollPage(token: 'token'),
+    const PollListPage(token: 'token'),
     const UserDetailPage(userId: 'userId', token: 'token'),
     // PollPage(),  // Added PollsPage
     const LoginPage(),
@@ -78,8 +78,8 @@ class _MainPageState extends State<MainPage> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.poll),
+            label: 'Polls',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle_outlined),
