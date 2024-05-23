@@ -8,6 +8,7 @@ class PollPage extends StatefulWidget {
   const PollPage({super.key, this.token, this.userId});
   final dynamic token;
   final dynamic userId;
+
   @override
   _PollPageState createState() => _PollPageState();
 }
@@ -17,7 +18,9 @@ class _PollPageState extends State<PollPage> {
   late String token;
   late String userId;
   bool _isLoading = false;
-
+  String chosenOptionId = "";
+  int questionId = 0;
+  // int optionId = 0;
 
   List<Map<String, dynamic>> pollOptions = [];
 
@@ -25,7 +28,6 @@ class _PollPageState extends State<PollPage> {
   void initState() {
     super.initState();
     token = widget.token;
-
     fetchPollData();
   }
 
@@ -37,19 +39,24 @@ class _PollPageState extends State<PollPage> {
       _isLoading = true;
     });
 
-    final url = 'http://3.110.219.27:8005/stapi/v1/polls/question/';
-    final response = await http.get(Uri.parse(url),
-    headers:{
-        'Authorization' : 'token $token'
-      }); 
+    final response = await http.get(
+      Uri.parse('http://3.110.219.27:8005/stapi/v1/polls/question/'),
+      headers: {
+        'Authorization': 'token $token',
+      },
+    );
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+      final List<dynamic> data = json.decode(response.body)['results'];
       if (data.isNotEmpty) {
+        final poll = data[0]; // Assuming we take the first poll in the list
         setState(() {
-          pollQuestion = data[0]['title'];
-          pollOptions = List<Map<String, dynamic>>.from(data[0]['option']);
-          _isLoading =false;
+          pollQuestion = poll['title'];
+          pollOptions = List<Map<String, dynamic>>.from(poll['option']);
+          questionId = poll['id'];
+          // optionId = poll['options']['id'];
+          
+          _isLoading = false;
         });
       }
     } else {
@@ -57,6 +64,32 @@ class _PollPageState extends State<PollPage> {
         _isLoading = false;
       });
       throw Exception('Failed to load poll data');
+    }
+  }
+
+  Future<void> submitAnswer(String optionId) async {
+    final response = await http.post(
+      Uri.parse('http://3.110.219.27:8005/stapi/v1/polls/answer/'),
+      headers: {
+        'Authorization': 'token $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'user': userId,
+        'question': questionId,
+        'option': optionId,
+        'locate': '',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        chosenOptionId = optionId;
+        _isLoading = false;
+      });
+    } else {
+      _isLoading = false;
+      throw Exception('Failed to submit answer');
     }
   }
 
@@ -68,26 +101,46 @@ class _PollPageState extends State<PollPage> {
       );
     } else {
       return Scaffold(
-      appBar: AppBar(
-        title: const Text('Poll Page'),
-      ),
-      body: pollQuestion.isEmpty
-          ? const Center(child: Text('No poll available'))
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    pollQuestion,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+        body: pollQuestion.isEmpty
+            ? const Center(child: Text('No poll available'))
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pollQuestion,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: pollOptions.length,
+                        itemBuilder: (context, index) {
+                          final option = pollOptions[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: ElevatedButton(
+                              // onPressed: chosenOptionId.isEmpty
+                              //     ? () => submitAnswer(option['id'].toString())
+                              //     : null,
+                              // style: ElevatedButton.styleFrom(
+                              //   backgroundColor: chosenOptionId == option['id'].toString()
+                              //       ? Colors.green
+                              //       : null,
+                              // ),
+                              onPressed: () { },
+                              child: Text(option['title']),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
       );
     }
   }
 }
-
-

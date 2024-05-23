@@ -43,7 +43,7 @@ class _MainPageState extends State<MainPage> {
     const LoginPage(),
   ];
 
-  static const List<String> _appBarTitles = ['Blog Posts', 'User Detail', 'Login'];
+  static const List<String> _appBarTitles = ['Polls', 'User Detail', 'Login'];
 
   void _onItemTapped(int index) {
     if(index == 2) {
