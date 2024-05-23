@@ -18,6 +18,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
   late String userID;
   late String token;
   Map userdata = {};
+  bool _isLoading = false;
 
   
   @override
@@ -29,6 +30,9 @@ class _UserDetailPageState extends State<UserDetailPage> {
   }
 
   Future<void> _getUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? token;
     userID = prefs.getString('userId') ?? userID;
@@ -42,18 +46,27 @@ class _UserDetailPageState extends State<UserDetailPage> {
     if (response.statusCode == 200) {
       setState(() {
         userdata = jsonDecode(response.body)['results'][0];
+        _isLoading = false;
       });
-      
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: _buildUserDetailPage(context),
+      appBar: AppBar(
+        title: const Text('User Details'),
       ),
-    );
-  }
+      body:  _isLoading
+          ? Container(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+            child: _buildUserDetailPage(context),
+          ),
+        );
+    }
 
   Widget _buildUserDetailPage(BuildContext context) {
     return Center(
@@ -68,7 +81,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
               
 
               children: [
-                SizedBox(height: 20.0),
+                const SizedBox(height: 20.0),
                 if (userdata['image'] != null && userdata['image'].isNotEmpty)
                   Center(
                     child: ClipOval(

@@ -32,7 +32,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     });
 
     final response = await http.get(
-      Uri.parse('http://192.168.1.26:8000/posts/'),
+      Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/posts/'),
       headers: {
         'Authorization': 'Token $token',
       },
@@ -65,12 +65,12 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                   itemBuilder: (context, index) {
                     final post = _posts[index];
                     return ListTile(
-                      leading: post['thumbnails'] != null && post['thumbnails'].isNotEmpty
+                      leading: post['thumbnail'] != null && post['thumbnail'].isNotEmpty
                           ? Image.network(
-                              post['thumbnails'].startsWith('http://') ||
-                                      post['thumbnails'].startsWith('https://')
-                                  ? post['thumbnails']
-                                  : 'http://192.168.1.26:8000${post['thumbnails']}',
+                              post['thumbnail'].startsWith('http://') ||
+                                      post['thumbnail'].startsWith('https://')
+                                  ? post['thumbnail']
+                                  : 'http://3.110.219.27:8005/stapi/v1/blogs/posts/${post['thumbnail']}',
                               width: 50,
                               height: 50,
                               fit: BoxFit.cover,
@@ -81,7 +81,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => PostDetailPage(postId: post['id'] , postTitle: post['title'],),
+                            builder: (context) => PostDetailPage(slug: post['slug'] , postTitle: post['title'],),
                           ),
                         );
                       },

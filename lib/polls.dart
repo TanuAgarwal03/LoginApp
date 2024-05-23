@@ -422,12 +422,16 @@ class _PollListPageState extends State<PollListPage> {
 
   @override
   Widget build(BuildContext context) {
+    
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     } else {
       return Scaffold(
+      appBar: AppBar(
+        title: Text('Polls'),
+      ),
         body: polls.isEmpty
             ? const Center(child: Text('No polls available'))
             : ListView.builder(

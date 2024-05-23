@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:login_page/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'userDetail.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,33 +16,59 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
   bool _passwordVisible = false;
-  
-  String _selectedFcmType = 'android';
 
+  @override
   void initState() {
     super.initState();
     _checkUserDetails();
   }
 
-  List<String> _fcmTypes = ['android', 'ios'];
+  // List<String> _fcmTypes = ['android', 'ios'];
+  String _selectedFcmType = 'android';
 
   Future<void> _checkUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
-    String? token = prefs.getString('token');
-    String? username = prefs.getString('username');
+    String? token = prefs.getString('token');    
+    // String? username = prefs.getString('username');
 
-    if(userId!= null && token!=null) {
-      Navigator.push(context, MaterialPageRoute(builder: (context)=>
-      MainPage(token: token , userId: userId)));
+    // String? email = prefs.getString('email');
+    // int? mobile = prefs.getInt('mobile');
+    // String? content = prefs.getString('content');
+
+
+    if (userId != null && token != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MainPage(token: token, userId: userId)),
+      );
     }
   }
-  
-  Future<void> _saveDataLocally(String userId, String token ,String username) async {
+
+  // Future<void> _saveDataLocally(Map<String, dynamic> data) async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   data.forEach((key, value) async {
+  //     if (value is String) {
+  //       await prefs.setString(key, value.trim());
+  //     } else if (value is int) {
+  //       await prefs.setInt(key, value);
+  //     } else if (value is bool) {
+  //       await prefs.setBool(key, value);
+  //     } else if (value is double) {
+  //       await prefs.setDouble(key, value);
+  //     } else if (value is List<String>) {
+  //       await prefs.setStringList(key, value);
+  //     }
+  //   });
+  // }
+   Future<void> _saveDataLocally(String userId, String token ,String username ) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('userId', userId.trim());
     await prefs.setString('token', token.trim());
     await prefs.setString('username', username.trim());
+    // await prefs.setString('email', email.trim());
+    // await prefs.setString('content', content.trim());
+    // await prefs.setInt('mobile', mobile.trim());
   }
 
   Future<void> _login() async {
@@ -61,12 +86,13 @@ class _LoginPageState extends State<LoginPage> {
       String userId = data['id'].toString();
       String token = data['token'];
 
+      // _saveDataLocally(data);
       _saveDataLocally(userId, token , username);
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainPage(token: token , userId: userId),
+          builder: (context) => MainPage(token: data['token'], userId: data['id'].toString()),
         ),
       );
     } else {
@@ -75,6 +101,7 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,24 +139,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 20.0),
-            // DropdownButtonFormField<String>(
-            //   value: _selectedFcmType,
-            //   onChanged: (String? value) {
-            //     setState(() {
-            //       _selectedFcmType = value!;
-            //     });
-            //   },
-            //   items: _fcmTypes.map((String fcmType) {
-            //     return DropdownMenuItem<String>(
-            //       value: fcmType,
-            //       child: Text(fcmType),
-            //     );
-            //   }).toList(),
-            //   decoration: const InputDecoration(
-            //     labelText: 'FCM Type',
-            //   ),
-            // ),
             const SizedBox(height: 40.0),
             ElevatedButton(
               onPressed: _login,
