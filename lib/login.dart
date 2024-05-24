@@ -23,19 +23,12 @@ class _LoginPageState extends State<LoginPage> {
     _checkUserDetails();
   }
 
-  // List<String> _fcmTypes = ['android', 'ios'];
   String _selectedFcmType = 'android';
 
   Future<void> _checkUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
-    String? token = prefs.getString('token');    
-    // String? username = prefs.getString('username');
-
-    // String? email = prefs.getString('email');
-    // int? mobile = prefs.getInt('mobile');
-    // String? content = prefs.getString('content');
-
+    String? token = prefs.getString('token');
 
     if (userId != null && token != null) {
       Navigator.push(
@@ -45,30 +38,23 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Future<void> _saveDataLocally(Map<String, dynamic> data) async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   data.forEach((key, value) async {
-  //     if (value is String) {
-  //       await prefs.setString(key, value.trim());
-  //     } else if (value is int) {
-  //       await prefs.setInt(key, value);
-  //     } else if (value is bool) {
-  //       await prefs.setBool(key, value);
-  //     } else if (value is double) {
-  //       await prefs.setDouble(key, value);
-  //     } else if (value is List<String>) {
-  //       await prefs.setStringList(key, value);
-  //     }
-  //   });
-  // }
-   Future<void> _saveDataLocally(String userId, String token ,String username ) async {
+  Future<void> _saveDataLocally(Map<String, dynamic> data) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userId', userId.trim());
-    await prefs.setString('token', token.trim());
-    await prefs.setString('username', username.trim());
-    // await prefs.setString('email', email.trim());
-    // await prefs.setString('content', content.trim());
-    // await prefs.setInt('mobile', mobile.trim());
+    List<Future> futures = [];
+    data.forEach((key, value) async {
+      if (value is String) {
+        await prefs.setString(key, value.trim());
+      } else if (value is int) {
+        await prefs.setInt(key, value);
+      } else if (value is bool) {
+        await prefs.setBool(key, value);
+      } else if (value is double) {
+        await prefs.setDouble(key, value);
+      } else if (value is List<String>) {
+        await prefs.setStringList(key, value);
+      }
+    });
+    await Future.wait(futures); 
   }
 
   Future<void> _login() async {
@@ -85,14 +71,18 @@ class _LoginPageState extends State<LoginPage> {
       final data = jsonDecode(response.body);
       String userId = data['id'].toString();
       String token = data['token'];
+      _saveDataLocally(data);
 
-      // _saveDataLocally(data);
-      _saveDataLocally(userId, token , username);
+      await _saveDataLocally({
+        'userId': userId,
+        'token': token,
+        'username' : username,
+      });
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainPage(token: data['token'], userId: data['id'].toString()),
+          builder: (context) => MainPage(token: token, userId: userId),
         ),
       );
     } else {

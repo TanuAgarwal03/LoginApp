@@ -7,7 +7,7 @@ class PostDetailPage extends StatefulWidget {
   final String slug;
   final String postTitle;
   const PostDetailPage(
-      {super.key, required this.slug, required this.postTitle});
+      {super.key, required this.slug, required this.postTitle });
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -21,13 +21,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String username = '';
   String email = '';
   int mobile = 0;
-  int postId = 1;
+  int userId = 0;
 
   Map<int, String> _categoryMap = {};
   Map<int, String> _tagMap = {};
   Map<int, String> _author = {};
   List<dynamic> _comments = [];
-
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -44,15 +43,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> _loadUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
-    username = prefs.getString('username') ?? ''; // Retrieve the username
+    username = prefs.getString('username') ?? ''; 
     email = prefs.getString('email') ?? '';
     mobile = prefs.getInt('mobile') ?? 0;
+    userId = prefs.getInt('id') ?? 0;
   }
 
   Future<void> _fetchPostDetail() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
-    _fetchComments();
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -145,6 +144,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       List users = jsonResponse['results'];
       setState(() {
         _author = {for (var user in users) user['id']: user['username']};
+        // _user = users['id'];
         _isLoading = false;
       });
     } else {
@@ -157,68 +157,91 @@ class _PostDetailPageState extends State<PostDetailPage> {
     token = prefs.getString('token') ?? '';
     setState(() {
       _isLoading = true;
+      _hasError = false;
     });
-    final response = await http.get(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/posts/'),
-      headers: {'Authorization': 'Token $token'},
-    );
-    if (response.statusCode == 200) {
-      List<dynamic> allComments = json.decode(response.body)['results']['comments'];
 
-      List<dynamic> postComments = allComments
-          .where((comment) => comment['post']['title'] == widget.postTitle)
-          .toList();
+    try {
+      final response = await http.get(
+        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/posts/${widget.slug}/'),
+        headers: {
+          'Authorization': 'Token $token',
+        },
+      );
 
+      if (response.statusCode == 200) {
+        setState(() {
+          _comments = json.decode(response.body)['comments'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    } catch (e) {
       setState(() {
-        _comments = postComments;
         _isLoading = false;
+        _hasError = true;
       });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Failed to load comments');
     }
   }
 
-  Future<void> _addComment(String commentText) async {
+    Future<void> _addComment(String comment) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    int postId = _post!['id'];
+
     setState(() {
       _isLoading = true;
     });
-    final response = await http.post(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
-      headers: {
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        // 'name': prefs.getString('username'),
-        'name': username,
-        'content': commentText,
-        'email' : email,
-        'mobile' :mobile ,
-        'post' : postId ,
-      }),
-    );
-    if (response.statusCode == 201) {
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'post': postId,
+          'content': comment,
+          'email' : email,
+          'mobile' : mobile,
+          'name' : username,
+          'user' : userId,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        // final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        // _fetchPostDetail();
+        _fetchComments();
+        _commentController.clear();
+        setState(() {
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          print('Failed to post comment');
+        });
+      }
+    } catch (e) {
       setState(() {
         _isLoading = false;
+        print('Exception occurred: $e');
       });
-      _fetchComments();
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Failed to add comment');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Post Detail')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: Text('unavailable')),
       );
     } else if (_hasError) {
       return Scaffold(
@@ -227,91 +250,77 @@ class _PostDetailPageState extends State<PostDetailPage> {
       );
     } else {
       return Scaffold(
-          appBar: AppBar(title: const Text('Post Detail')),
-          body: SingleChildScrollView(
-            child: _post != null
-                ? Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_post!['title'],
-                            style: const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10),
-                        // Container(
-                        //   padding: const EdgeInsets.all(25),
-                        //   child: Center(
-                        //       child: _post!['featured'] != null &&
-                        //               _post!['featured'].isNotEmpty
-                        //           ? Image.network(
-                        //               _post!['featured']
-                        //                           .startsWith('http://') ||
-                        //                       _post!['featured']
-                        //                           .startsWith('https://')
-                        //                   ? _post!['featured']
-                        //                   : 'http://3.110.219.27:8005/stapi/v1/blogs/posts/${_post!['featured']}',
-                        //             )
-                        //           : const Icon(Icons.image, size: 50)),
-                        // ),
-                        const SizedBox(height: 10),
-                        Text(
-                          _post!['content'],
-                          style: const TextStyle(fontSize: 16),
-                          textAlign: TextAlign.justify,
+        appBar: AppBar(title: const Text('Post Detail')),
+        body: SingleChildScrollView(
+          child: _post != null
+              ? Padding(
+                  padding: const EdgeInsets.all(22),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_post!['title'],
+                          style: const TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      Text(
+                        _post!['content'],
+                        style: const TextStyle(fontSize: 16),
+                        textAlign: TextAlign.justify,
+                      ),
+                      const SizedBox(height: 10),
+                      Text('Author: ${_author[_post!['author']]}',
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 5),
+                      Text('Created Date: ${_post!['timestamp']}',
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 5),
+                      Text('Published Date: ${_post!['utimestamp']}',
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 5),
+                      Text('Tags: ${_getTagTitles(_post!['tag'])}',
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 5),
+                      Text('Category: ${_categoryMap[_post!['category']]}',
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Comments:',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      _comments.isNotEmpty
+                          ? Column(
+                              children: _comments
+                                  .map((comment) => ListTile(
+                                        title: Text(comment['content']),
+                                        subtitle: Text('By: ${comment['users']['username']}'),
+                                      ))
+                                  .toList(),
+                            )
+                          : const Text('No comments yet.'),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _commentController,
+                        decoration: const InputDecoration(
+                          hintText: 'Add a comment...',
+                          border: OutlineInputBorder(),
+                        
                         ),
-                        const SizedBox(height: 10),
-                        Text('Author: ${_author[_post!['author']]}',
-                            style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 5),
-                        Text('Created Date: ${_post!['timestamp']}',
-                            style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 5),
-                        Text('Published Date: ${_post!['utimestamp']}',
-                            style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 5),
-                        Text('Tags: ${_getTagTitles(_post!['tag'])}',
-                            style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 5),
-                        Text('Category: ${_categoryMap[_post!['category']]}',
-                            style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 5),
-                        const Text('Comments:',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        // _comments.isNotEmpty
-                        //     ? ListView.builder(
-                        //         shrinkWrap: true,
-                        //         itemCount: _comments.length,
-                        //         itemBuilder: (context, index) {
-                        //           return ListTile(
-                        //             title: Text(_comments[index]['body']),
-                        //             subtitle: Text(
-                        //                 'By ${_comments[index]['name']} at ${_comments[index]['created']} '),
-                        //           );
-                        //         },
-                        //       )
-                        //     : const Text('No comments yet'),
-                        const SizedBox(height: 20),
-                        TextField(
-                          controller: _commentController,
-                          decoration: const InputDecoration(
-                              labelText: 'Add a comment..'),
-                        ),
-                        const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (_commentController.text.isNotEmpty) {
-                              await _addComment(_commentController.text);
-                              _commentController.clear();
-                            }
-                          },
-                          child: const Text('Submit'),
-                        ),
-                      ],
-                    ),
-                  )
-                : const Center(child: Text('Post not found')),
-          ));
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          _addComment(_commentController.text);
+                        },
+                        child: const Text('Submit'),
+                      ),
+                    ],
+                  ),
+                )
+              : const Center(child: Text('Post not found')),
+        ),
+      );
     }
   }
 }
