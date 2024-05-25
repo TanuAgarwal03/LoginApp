@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/login.dart';
+import 'package:login_page/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -19,166 +22,79 @@ class _SignUpPageState extends State<SignUpPage> {
   String _errorMessage = '';
   String _selectedFcmType = 'android';
   bool _isLoading = false;
-  // List<String> _countries = [];
-  // State and Country variables
-//   List<String> _countries = [];
-//   List<String> _countryIds = [];
-//   List<String> _states = [];
-//   List<String> _stateIds = [];
-// List<String> _stateCountryIds = [];
 
-  // int? _selectedCountry;
-  // String _selectedState = '';
-
+  List<Map<String, dynamic>> _states = [];
   int? _selectedCountry;
+  int? _selectedState;
   List<Map<String, dynamic>> _countries = [];
-// String? _errorMessage;
-// bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
     _fetchCountries();
   }
-//   Future<void> _fetchCountries() async {
-//   try {
-//     final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
 
-//     if (response.statusCode == 200) {
-//       final parsedResponse = jsonDecode(response.body);
-//       List<dynamic> countries = parsedResponse['results'];
+  Future<void> _fetchCountries() async {
+    try {
+      final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
 
-//       setState(() {
-//         _countries = countries.map<String>((country) => country['name'].toString()).toList();
-//         // Optionally, you can store country IDs as well for later use
-//         // _countryIds = countries.map<String>((country) => country['id'].toString()).toList();
-//       });
-//     } else {
-//       throw Exception('Failed to load countries');
-//     }
-//   } catch (e) {
-//     print('Error loading countries: $e');
-//     setState(() {
-//       _errorMessage = 'Failed to load countries';
-//     });
-//   } finally {
-//     setState(() {
-//       _isLoading = false; // Make sure to set loading state to false
-//     });
-//   }
-// }
-Future<void> _fetchCountries() async {
-  try {
-    final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
+      if (response.statusCode == 200) {
+        final parsedResponse = jsonDecode(response.body);
+        List<dynamic> countries = parsedResponse['results'];
 
-    if (response.statusCode == 200) {
-      final parsedResponse = jsonDecode(response.body);
-      List<dynamic> countries = parsedResponse['results'];
-
+        setState(() {
+          _countries = countries.map<Map<String, dynamic>>((country) {
+            return {
+              'id': country['id'],
+              'name': country['name'],
+            };
+          }).toList();
+        });
+      } else {
+        throw Exception('Failed to load countries');
+      }
+    } catch (e) {
+      print('Error loading countries: $e');
       setState(() {
-        _countries = countries.map<Map<String, dynamic>>((country) {
-          return {
-            'id': country['id'],
-            'name': country['name'],
-          };
-        }).toList();
+        _errorMessage = 'Failed to load countries';
       });
-    } else {
-      throw Exception('Failed to load countries');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-  } catch (e) {
-    print('Error loading countries: $e');
-    setState(() {
-      _errorMessage = 'Failed to load countries';
-    });
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
-  // Future<void> _fetchCountries() async {
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
 
-  //   final response = await http.post(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'),
-  //     // body: json.encode({
-  //     //   'id': countryId,
-  //     //   'name' : countryName,
-  //     // }),
-  //   );
+  Future<void> _fetchStates(int countryId) async {
+    try {
+      final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/state/'));
 
-  //     if (response.statusCode == 200) {
-  //       final parsedResponse = jsonDecode(response.body);
-  //       List<dynamic> countries = parsedResponse['results'];
+      if (response.statusCode == 200) {
+        final parsedResponse = jsonDecode(response.body);
+        List<dynamic> states = parsedResponse['results'];
 
-  //       setState(() {
-  //         _countries = countries.map((country) => country['name'].toString()).toList();
-  //       });
-  //     } else {
-  //       throw Exception('Failed to load countries');
-  //     }
-
-    // if (response.statusCode == 200) {
-    //   setState(() {
-    //     countryId = jsonDecode(response.body)['results']['id'];
-    //     countryName = jsonDecode(response.body)['results']['name'];
-    //     _isLoading = false;
-    //   });
-    // } else {
-    //   setState(() {
-    //     _isLoading = false;
-    //   });
-    //   throw Exception('Failed to submit answer');
-    // }
-  // }
-  // Future<void> _fetchCountries() async {
-  //   try {
-  //     final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
-  //     if (response.statusCode == 200) {
-  //     final parsedResponse = jsonDecode(response.body);
-  //     List<dynamic> countries = parsedResponse['results'];
-
-  //     setState(() {
-  //       _countries = countries.map((country) => country['name'].toString()).toList();
-  //       _countryIds = countries.map((country) => country['id'].toString()).toList();
-  //     });
-  //     } else {
-  //       throw Exception('Failed to load countries');
-  //     }  
-  //   } catch (e) {
-  //     print('Error loading countries: $e');
-  //     setState(() {
-  //       _errorMessage = 'Failed to load countries';
-  //     });
-  //   }
-  // }
-
-//   Future<void> _fetchStates(String countryId) async {
-//   try {
-//     final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/state/?country=$countryId'));
-
-//     if (response.statusCode == 200) {
-//       final parsedResponse = jsonDecode(response.body);
-//       List<dynamic> states = parsedResponse['results'];
-
-//       setState(() {
-//         // _states = states.map((state) => state['name'].toString()).toList();
-//         // _stateIds = states.map((state) => state['id'].toString()).toList();
-//         // _stateCountryIds = states.map((state) => state['countries']['id'].toString()).toList();
-//       });
-//     } else {
-//       throw Exception('Failed to load states');
-//     }
-//   } catch (e) {
-//     print('Error loading states: $e');
-//     setState(() {
-//       _errorMessage = 'Failed to load states';
-//     });
-//   }
-// }
-
-
+        setState(() {
+          _states = states.where((state) => state['country'] == countryId).map<Map<String, dynamic>>((state) {
+            return {
+              'id': state['id'],
+              'name': state['name'],
+            };
+          }).toList();
+        });
+      } else {
+        throw Exception('Failed to load states');
+      }
+    } catch (e) {
+      print('Error loading states: $e');
+      setState(() {
+        _errorMessage = 'Failed to load states';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _signUp() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -188,22 +104,29 @@ Future<void> _fetchCountries() async {
       return;
     }
 
-    final response = await http.post(Uri.parse('http://3.110.219.27:8005/stapi/v1/signup/'),
-        body: {
-          'username': _usernameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text.trim(),
-          'cpassword': _confirmPasswordController.text.trim(),
-          'first_name': _firstNameController.text.trim(),
-          'last_name': _lastNameController.text.trim(),
-          'mobile': _mobileController.text.trim(),
-          'fcm_type': _selectedFcmType,
-          'country': _selectedCountry.toString(),
-          // 'state': _selectedState,
-        });
+    final response = await http.post(
+      Uri.parse('http://3.110.219.27:8005/stapi/v1/signup/'),
+      body: {
+        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text.trim(),
+        'cpassword': _confirmPasswordController.text.trim(),
+        'first_name': _firstNameController.text.trim(),
+        'last_name': _lastNameController.text.trim(),
+        'mobile': _mobileController.text.trim(),
+        'fcm_type': _selectedFcmType,
+        'country': _selectedCountry.toString(),
+        'state': _selectedState?.toString(), 
+        'locate': '',        
+      },
+    );
 
     if (response.statusCode == 200) {
       print('Sign up successful');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
     } else {
       print('Sign up failed');
       setState(() {
@@ -278,22 +201,44 @@ Future<void> _fetchCountries() async {
               const SizedBox(height: 15.0),
 
               DropdownButtonFormField<int>(
-                hint: Text('Select country'),
+                hint: const Text('Select country'),
                 value: _selectedCountry,
                 onChanged: (int? value) {
                   setState(() {
                     _selectedCountry = value;
+                    _selectedState = null;
+                    _states = [];
                   });
+                  if (value != null) {
+                    _fetchStates(value);
+                  }
                 },
                 items: _countries.map<DropdownMenuItem<int>>((country) {
                   return DropdownMenuItem<int>(
                     key: Key(country['name']),
                     value: country['id'],
                     child: Text(country['name']),
-                    );
-              }).toList(),
+                  );
+                }).toList(),
               ),
-                          
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                hint: const Text('Select State'),
+                value: _selectedState,
+                onChanged: (int? value) {
+                  setState(() {
+                    _selectedState = value;
+                  });
+                },
+                items: _states.map<DropdownMenuItem<int>>((state) {
+                  return DropdownMenuItem<int>(
+                    key: Key(state['name']),
+                    value: state['id'],
+                    child: Text(state['name']),
+                  );
+                }).toList(),
+              ),
+
               if (_errorMessage.isNotEmpty)
                 Text(
                   _errorMessage,
@@ -306,7 +251,6 @@ Future<void> _fetchCountries() async {
                   child: const Text('Sign Up'),
                 ),
               ),
-            
             ],
           ),
         ),

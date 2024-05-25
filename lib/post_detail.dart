@@ -28,6 +28,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Map<int, String> _author = {};
   List<dynamic> _comments = [];
   final TextEditingController _commentController = TextEditingController();
+  Map<int, TextEditingController> _replyControllers = {};
 
   @override
   void initState() {
@@ -234,56 +235,52 @@ class _PostDetailPageState extends State<PostDetailPage> {
       });
     }
   }
+ Future<void> _addReply(int commentId, String reply) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+    int postId = _post!['id'];
 
-  // Future<void> _replyComment(String comment , int commentId) async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   token = prefs.getString('token') ?? '';
-  //   int postId = _post!['id'];
-  //   // int commentId = _comments['id'];
+    setState(() {
+      _isLoading = true;
+    });
 
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
+    try {
+      final response = await http.post(
+        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'parent': commentId,
+          'content': reply,
+          'email': email,
+          'mobile': mobile,
+          'name': username,
+          'user': userId,
+          'post' :postId,
+        }),
+      );
 
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
-  //       headers: {
-  //         'Authorization': 'Token $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: jsonEncode({
-  //         'post': postId,
-  //         'content': comment,
-  //         'email' : email,
-  //         'mobile' : mobile,
-  //         'name' : username,
-  //         'user' : userId,
-  //         'parent' :commentId ,
-  //       }),
-  //     );
-
-  //     if (response.statusCode == 201) {
-  //       _fetchComments();
-  //       _commentController.clear();
-  //       setState(() {
-  //         _isLoading = false;
-  //       });
-  //     } else {
-  //       setState(() {
-  //         _isLoading = false;
-  //         print('Failed to post comment');
-  //       });
-  //     }
-  //   } catch (e) {
-  //     setState(() {
-  //       _isLoading = false;
-  //       print('Exception occurred: $e');
-  //     });
-  //   }
-  // }
-
-
+      if (response.statusCode == 201) {
+        _fetchComments();
+        _replyControllers[commentId]?.clear();
+        setState(() {
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          print('Failed to post reply');
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        print('Exception occurred: $e');
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -348,34 +345,50 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                             title: Text(comment['content']),
                                             subtitle: Text('By: ${comment['users']['username']}'),
                                           ),
-                                          //  Padding(
-                                          //   padding: const EdgeInsets.only(left: 16.0),
-                                          //   child: Row(
-                                          //     children: [
-                                          //       Expanded(
-                                          //         child: TextField(
-                                          //           controller: _commentController,
-                                          //           decoration: const InputDecoration(
-                                          //             hintText: 'Add a reply...',
-                                                     
-                                          //           ),
-                                          //         ),
-                                          //       ),
-                                          //       const SizedBox(width: 10),
-                                          //       ElevatedButton(
-                                          //         onPressed: () {
-                                          //           _addComment(_commentController.text);
-                                          //         },
-                                          //         child: const Text('Reply'),
-                                          //       ),
-                                          //     ],
-                                          //   ),
-                                          // ),
                                           const SizedBox(height: 10),
+                                          Column(
+                                            children: (comment['replies'] as List)
+                                                .map((reply) => ListTile(
+                                                      title: Text(reply['content']),
+                                                      subtitle: Text('By: ${reply['users']['username']}'),
+                                                    ))
+                                                .toList(),
+                                          ),
+                                          TextField(
+                                            controller: _replyControllers[comment['id']] ??= TextEditingController(),
+                                            decoration: const InputDecoration(
+                                              hintText: 'Add a reply...',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              _addReply(comment['id'], _replyControllers[comment['id']]!.text);
+                                            },
+                                            child: const Text('Reply'),
+                                          ),
+                                          const SizedBox(height: 20),
                                         ],
                                       ))
                                   .toList(),
                             )
+                      // _comments.isNotEmpty
+                      //     ? Column(
+                      //         children: _comments
+                      //         .map((comment) => Column(
+                      //                   crossAxisAlignment:
+                      //                       CrossAxisAlignment.start,
+                      //                   children: [
+                      //                     ListTile(
+                      //                       title: Text(comment['content']),
+                      //                       subtitle: Text('By: ${comment['users']['username']}'),
+                      //                     ),
+                      //                     const SizedBox(height: 10),
+                      //                   ],
+                      //                 ))
+                      //             .toList(),
+                      //       )
                           : const Text('No comments yet.'),
                       const SizedBox(height: 10),
                       TextField(
