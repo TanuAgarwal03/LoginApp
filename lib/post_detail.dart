@@ -155,6 +155,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> _fetchComments() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
+    // int commentId = 0;
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -171,6 +172,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (response.statusCode == 200) {
         setState(() {
           _comments = json.decode(response.body)['comments'];
+          // commentId = json.decode(response.body)['comments']['id'];
           _isLoading = false;
         });
       } else {
@@ -187,7 +189,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
-    Future<void> _addComment(String comment) async {
+  Future<void> _addComment(String comment) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
     int postId = _post!['id'];
@@ -214,8 +216,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
       );
 
       if (response.statusCode == 201) {
-        // final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        // _fetchPostDetail();
         _fetchComments();
         _commentController.clear();
         setState(() {
@@ -234,6 +234,54 @@ class _PostDetailPageState extends State<PostDetailPage> {
       });
     }
   }
+
+  // Future<void> _replyComment(String comment , int commentId) async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   token = prefs.getString('token') ?? '';
+  //   int postId = _post!['id'];
+  //   // int commentId = _comments['id'];
+
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
+  //       headers: {
+  //         'Authorization': 'Token $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: jsonEncode({
+  //         'post': postId,
+  //         'content': comment,
+  //         'email' : email,
+  //         'mobile' : mobile,
+  //         'name' : username,
+  //         'user' : userId,
+  //         'parent' :commentId ,
+  //       }),
+  //     );
+
+  //     if (response.statusCode == 201) {
+  //       _fetchComments();
+  //       _commentController.clear();
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //     } else {
+  //       setState(() {
+  //         _isLoading = false;
+  //         print('Failed to post comment');
+  //       });
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       _isLoading = false;
+  //       print('Exception occurred: $e');
+  //     });
+  //   }
+  // }
 
 
   @override
@@ -292,9 +340,39 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       _comments.isNotEmpty
                           ? Column(
                               children: _comments
-                                  .map((comment) => ListTile(
-                                        title: Text(comment['content']),
-                                        subtitle: Text('By: ${comment['users']['username']}'),
+                              .map((comment) => Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          ListTile(
+                                            title: Text(comment['content']),
+                                            subtitle: Text('By: ${comment['users']['username']}'),
+                                          ),
+                                          //  Padding(
+                                          //   padding: const EdgeInsets.only(left: 16.0),
+                                          //   child: Row(
+                                          //     children: [
+                                          //       Expanded(
+                                          //         child: TextField(
+                                          //           controller: _commentController,
+                                          //           decoration: const InputDecoration(
+                                          //             hintText: 'Add a reply...',
+                                                     
+                                          //           ),
+                                          //         ),
+                                          //       ),
+                                          //       const SizedBox(width: 10),
+                                          //       ElevatedButton(
+                                          //         onPressed: () {
+                                          //           _addComment(_commentController.text);
+                                          //         },
+                                          //         child: const Text('Reply'),
+                                          //       ),
+                                          //     ],
+                                          //   ),
+                                          // ),
+                                          const SizedBox(height: 10),
+                                        ],
                                       ))
                                   .toList(),
                             )
@@ -304,7 +382,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         controller: _commentController,
                         decoration: const InputDecoration(
                           hintText: 'Add a comment...',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(                  
+                          ),
                         
                         ),
                       ),

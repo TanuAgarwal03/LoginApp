@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_page/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/home_page.dart';
 import 'package:login_page/polls.dart';
@@ -19,8 +20,10 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: LoginPage(),
+    return MaterialApp(
+      home: SignUpPage(),
+      // home: LoginPage(),
+      // home: SignUpPage(),
     );
   }
 }
