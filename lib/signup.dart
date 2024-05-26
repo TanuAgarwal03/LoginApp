@@ -251,6 +251,19 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: const Text('Sign Up'),
                 ),
               ),
+              const SizedBox(height: 20.0),
+              Center(
+                child:TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              },
+              child: const Text('Already have an account ? LOGIN'),
+            ),
+              )
+              
             ],
           ),
         ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:login_page/main.dart';
+import 'package:login_page/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -134,6 +135,17 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: _login,
               child: const Text('Login'),
             ),
+            const SizedBox(height: 20.0),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignUpPage()),
+                );
+              },
+              child: const Text('New user? Sign up'),
+            ),
+            
           ],
         ),
       ),
