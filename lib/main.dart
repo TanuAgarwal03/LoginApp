@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_page/change_password.dart';
 // import 'package:login_page/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/home_page.dart';
@@ -21,9 +22,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      // home: SignUpPage(),
       home: LoginPage(),
-      // home: SignUpPage(),
     );
   }
 }
@@ -105,7 +104,7 @@ class _MainPageState extends State<MainPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const PollListPage(token: 'token')), // Replace with actual token
+                  MaterialPageRoute(builder: (context) => const PollListPage(token: 'token')), 
                 );
               },
             ),
@@ -115,7 +114,17 @@ class _MainPageState extends State<MainPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const UserDetailPage(userId: 'userId', token: 'token')), // Replace with actual userId and token
+                  MaterialPageRoute(builder: (context) => const UserDetailPage(userId: 'userId', token: 'token')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.key_rounded),
+              title: const Text('Change Password'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChangePasswordPage()),
                 );
               },
             ),

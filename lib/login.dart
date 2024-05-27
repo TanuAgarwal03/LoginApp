@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/forget_password.dart';
 import 'package:login_page/main.dart';
+import 'package:login_page/otpVerify.dart';
 import 'package:login_page/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,14 +81,32 @@ class _LoginPageState extends State<LoginPage> {
         'token': token,
         'username' : username,
       });
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => MainPage(token: token, userId: userId),
         ),
       );
-    } else {
+           
+
+    } else if (response.statusCode == 400){
+      final data = jsonDecode(response.body);
+       String token = data['token'];
+
+      if(token != null) {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtpVerificationPage(email: username),
+            ),
+          );
+      } else {
+        setState(() {
+        _errorMessage = 'Failed to check account status. Please try again later.';
+      });
+      }
+    }
+    else {
       setState(() {
         _errorMessage = 'Invalid username or password.';
       });
@@ -131,6 +151,16 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 40.0),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ForgetPasswordPage()),
+                );
+              },
+              child: const Text('Forget password?'),
+            ),
+            const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: _login,
               child: const Text('Login'),
