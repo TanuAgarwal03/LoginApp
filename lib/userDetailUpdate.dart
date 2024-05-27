@@ -167,7 +167,6 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       request.fields['first_name'] = firstName;
       request.fields['last_name'] = lastName;
       request.fields['status'] = status;
-      // request.fields['state'] = state;
       request.fields['dob'] = dob;
       request.fields['gender'] = gender;
       request.fields['married'] = married;

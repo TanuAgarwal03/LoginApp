@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:login_page/login.dart';
-import 'package:login_page/main.dart';
+import 'package:login_page/otpVerify.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -36,6 +36,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _fetchCountries() async {
     try {
+      _isLoading = true;
       final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
 
       if (response.statusCode == 200) {
@@ -49,8 +50,10 @@ class _SignUpPageState extends State<SignUpPage> {
               'name': country['name'],
             };
           }).toList();
+          _isLoading = false;
         });
       } else {
+        _isLoading  = false;
         throw Exception('Failed to load countries');
       }
     } catch (e) {
@@ -97,9 +100,13 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Future<void> _signUp() async {
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // String? token = prefs.getString('token');
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _errorMessage = 'Passwords do not match';
+        _isLoading = false;
       });
       return;
     }
@@ -121,16 +128,28 @@ class _SignUpPageState extends State<SignUpPage> {
       },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       print('Sign up successful');
+      _isLoading = false;
+
+      final responseData = jsonDecode(response.body);
+      final token = responseData['token'];
+
+      // Save the token to local storage
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationPage(email: _emailController.text.trim())
+          ),
       );
     } else {
       print('Sign up failed');
       setState(() {
         _errorMessage = 'Sign up failed. Please try again later.';
+        _isLoading = false;
       });
     }
   }
