@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+
 
 class PostDetailPage extends StatefulWidget {
   final String slug;
   final String postTitle;
   const PostDetailPage(
       {super.key, required this.slug, required this.postTitle });
+
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -22,6 +25,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String email = '';
   int mobile = 0;
   int userId = 0;
+  String htmlcode = '';
+  String postTitle = '';
 
   Map<int, String> _categoryMap = {};
   Map<int, String> _tagMap = {};
@@ -68,6 +73,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (response.statusCode == 200) {
         setState(() {
           _post = json.decode(response.body);
+          htmlcode = _post!['content'];
+          postTitle = _post!['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
           _isLoading = false;
         });
       } else {
@@ -85,7 +92,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
       });
     }
   }
-
   Future<void> _fetchCategories() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
@@ -145,7 +151,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
       List users = jsonResponse['results'];
       setState(() {
         _author = {for (var user in users) user['id']: user['username']};
-        // _user = users['id'];
         _isLoading = false;
       });
     } else {
@@ -156,7 +161,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> _fetchComments() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
-    // int commentId = 0;
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -173,7 +177,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (response.statusCode == 200) {
         setState(() {
           _comments = json.decode(response.body)['comments'];
-          // commentId = json.decode(response.body)['comments']['id'];
           _isLoading = false;
         });
       } else {
@@ -283,6 +286,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   }
   @override
   Widget build(BuildContext context) {
+    
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Post Detail')),
@@ -300,18 +304,30 @@ class _PostDetailPageState extends State<PostDetailPage> {
           child: _post != null
               ? Padding(
                   padding: const EdgeInsets.all(22),
+                  
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_post!['title'],
+                      
+                      Text(postTitle,
                           style: const TextStyle(
                               fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 10),
-                      Text(
-                        _post!['content'],
-                        style: const TextStyle(fontSize: 16),
-                        textAlign: TextAlign.justify,
+                      const SizedBox(height: 30),
+                      Image.network(_post!['featured'].startsWith('http://') ||
+                                      _post!['featured'].startsWith('https://')
+                                  ? _post!['featured']
+                                  : 'http://3.110.219.27:8005/stapi/v1/blogs/posts/${_post!['featured']}',
+                              width: 400,
+                              height: 250,
+                              fit: BoxFit.cover),
+
+                      
+                      const SizedBox(height: 40),
+
+                      HtmlWidget(
+                        htmlcode,                             
                       ),
+
                       const SizedBox(height: 10),
                       Text('Author: ${_author[_post!['author']]}',
                           style: const TextStyle(fontSize: 16)),
@@ -373,22 +389,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                       ))
                                   .toList(),
                             )
-                      // _comments.isNotEmpty
-                      //     ? Column(
-                      //         children: _comments
-                      //         .map((comment) => Column(
-                      //                   crossAxisAlignment:
-                      //                       CrossAxisAlignment.start,
-                      //                   children: [
-                      //                     ListTile(
-                      //                       title: Text(comment['content']),
-                      //                       subtitle: Text('By: ${comment['users']['username']}'),
-                      //                     ),
-                      //                     const SizedBox(height: 10),
-                      //                   ],
-                      //                 ))
-                      //             .toList(),
-                      //       )
                           : const Text('No comments yet.'),
                       const SizedBox(height: 10),
                       TextField(

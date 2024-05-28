@@ -69,6 +69,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
         selectedOptionTitle = pollOptions
             .firstWhere((option) => option['id'].toString() == optionId)['title'];
         _isLoading = false;
+        _canVote = false; // After submitting the answer, the user can no longer vote.
       });
     } else {
       setState(() {
@@ -85,7 +86,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
         title: Text('Poll Details'),
       ),
       body: _isLoading
-          ? Container(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -97,16 +98,22 @@ class _PollDetailPageState extends State<PollDetailPage> {
                         fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  
                   if (!_canVote)
                     Column(
                       children: [
                         const Text(
-                          'You have already voted',
+                          'You have already voted for:',
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             color: Colors.green,
                             fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          selectedOptionTitle,
+                          style: const TextStyle(
+                            fontSize: 18,
                           ),
                         ),
                         const SizedBox(height: 16),

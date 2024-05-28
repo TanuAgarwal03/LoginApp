@@ -22,6 +22,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+      debugShowCheckedModeBanner: false, 
       home: LoginPage(),
     );
   }
@@ -83,7 +84,7 @@ class _MainPageState extends State<MainPage> {
                 color: Colors.blue,
               ),
               child: Text(
-                'Drawer Header',
+                'Menu',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,

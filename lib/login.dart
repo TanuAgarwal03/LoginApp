@@ -36,7 +36,8 @@ class _LoginPageState extends State<LoginPage> {
     if (userId != null && token != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => MainPage(token: token, userId: userId)),
+        MaterialPageRoute(
+            builder: (context) => MainPage(token: token, userId: userId)),
       );
     }
   }
@@ -57,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setStringList(key, value);
       }
     });
-    await Future.wait(futures); 
+    await Future.wait(futures);
   }
 
   Future<void> _login() async {
@@ -67,7 +68,11 @@ class _LoginPageState extends State<LoginPage> {
 
     final response = await http.post(
       Uri.parse('http://3.110.219.27:8005/stapi/v1/login/'),
-      body: {'username': username, 'password': password, 'fcm_type': _selectedFcmType},
+      body: {
+        'username': username,
+        'password': password,
+        'fcm_type': _selectedFcmType
+      },
     );
 
     if (response.statusCode == 201) {
@@ -79,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
       await _saveDataLocally({
         'userId': userId,
         'token': token,
-        'username' : username,
+        'username': username,
       });
       Navigator.pushReplacement(
         context,
@@ -87,26 +92,24 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context) => MainPage(token: token, userId: userId),
         ),
       );
-           
-
-    } else if (response.statusCode == 400){
+    } else if (response.statusCode == 400) {
       final data = jsonDecode(response.body);
-       String token = data['token'];
+      String token = data['token'];
 
-      if(token != null) {
+      if (token != null) {
         Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OtpVerificationPage(email: username),
-            ),
-          );
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationPage(email: username),
+          ),
+        );
       } else {
         setState(() {
-        _errorMessage = 'Failed to check account status. Please try again later.';
-      });
+          _errorMessage =
+              'Failed to check account status. Please try again later.';
+        });
       }
-    }
-    else {
+    } else {
       setState(() {
         _errorMessage = 'Invalid username or password.';
       });
@@ -114,34 +117,57 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        padding: const EdgeInsets.all(20.0),
-        margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (_errorMessage.isNotEmpty)
-              Text(
-                _errorMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
-            TextFormField(
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Container(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (_errorMessage.isNotEmpty)
+            Text(
+              _errorMessage,
+              style: const TextStyle(color: Colors.red),
+            ),
+          const Center(
+          child: CircleAvatar(
+            radius: 50,
+            backgroundImage: AssetImage('assets/image/ic1_launcher.png'),
+          ),
+          ),
+          
+          const SizedBox(height: 20.0),
+          
+          ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.person),
+            ),
+            title: TextFormField(
               controller: _usernameController,
               decoration: const InputDecoration(
+                border: OutlineInputBorder(),
                 labelText: 'Username',
+                hintText: 'Enter username'
               ),
             ),
-            const SizedBox(height: 20.0),
-            TextFormField(
+          ),
+          const SizedBox(height: 10.0),
+          ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.lock),
+            ),
+            title: TextFormField(
               controller: _passwordController,
               obscureText: !_passwordVisible,
               decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 labelText: 'Password',
+                hintText: 'Enter valid password',
                 suffixIcon: IconButton(
-                  icon: Icon(_passwordVisible ? Icons.visibility : Icons.visibility_off),
+                  icon: Icon(_passwordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off),
                   onPressed: () {
                     setState(() {
                       _passwordVisible = !_passwordVisible;
@@ -150,36 +176,58 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 40.0),
-            
-            ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.only(right: 20.0),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ForgetPasswordPage()),
+                  );
+                },
+                child: const Text(
+                  'Forget password ?',
+                  style: TextStyle(fontSize: 14, color: Colors.blue),
+                ),
+              ),
             ),
-            const SizedBox(height: 20.0),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ForgetPasswordPage()),
-                );
-              },
-              child: const Text('Forget password?'),
+          ),
+
+          
+          const SizedBox(height: 20.0),
+          FilledButton(
+            onPressed: _login,
+            style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.blue)),
+            child: const Text('Login'),
+          ),
+          
+          const SizedBox(height: 10.0),
+          Center(child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Create a new account.', textAlign: TextAlign.center),
+                Padding( 
+                  padding: const EdgeInsets.only(left:1.0), 
+                  child: InkWell( 
+                    onTap: (){ 
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SignUpPage()),
+                      ); 
+                    }, 
+                      child: const Text('Sign Up.', style: TextStyle(fontSize: 14, color: Colors.blue))), 
+                ) 
+              ],
             ),
-            const SizedBox(height: 20.0),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignUpPage()),
-                );
-              },
-              child: const Text('New user? Sign up'),
-            ),
-            
-          ],
-        ),
+          ) ,
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
