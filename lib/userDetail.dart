@@ -61,7 +61,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
         title: const Text('User Details'),
       ),
       body:  _isLoading
-          ? Container(child: CircularProgressIndicator())
+          ? const CircularProgressIndicator()
           : SingleChildScrollView(
             child: _buildUserDetailPage(context),
           ),
@@ -136,6 +136,22 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   label: 'Contact',
                   value: userdata['mobile'].toString(),
                   ),
+                //  if (userdata['country'] != null) UserDetailItem(
+                //   label: 'Country',
+                //   value: userdata['country']['name'],
+                // ),
+                // if (userdata['state'] != null) UserDetailItem(
+                //   label: 'State',
+                //   value: userdata['state']['name'],
+                // ),
+                UserDetailItem(
+                  label: 'Country',
+                  value: userdata['countries']['name']
+                  ),
+                UserDetailItem(
+                  label: 'State', 
+                  value: userdata['states']['name'])
+
               ],
             ),
           ),

@@ -6,6 +6,8 @@ import 'package:login_page/otpVerify.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
@@ -21,6 +23,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   String _errorMessage = '';
   String _selectedFcmType = 'android';
+  // ignore: unused_field
   bool _isLoading = false;
 
   List<Map<String, dynamic>> _states = [];

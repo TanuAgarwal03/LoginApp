@@ -151,6 +151,12 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 40.0),
+            
+            ElevatedButton(
+              onPressed: _login,
+              child: const Text('Login'),
+            ),
+            const SizedBox(height: 20.0),
             TextButton(
               onPressed: () {
                 Navigator.push(
@@ -159,11 +165,6 @@ class _LoginPageState extends State<LoginPage> {
                 );
               },
               child: const Text('Forget password?'),
-            ),
-            const SizedBox(height: 20.0),
-            ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
             ),
             const SizedBox(height: 20.0),
             TextButton(
