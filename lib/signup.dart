@@ -194,7 +194,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     backgroundColor: Colors.white,
                     child:  const Icon(Icons.arrow_back),
                   ),
-                  const SizedBox(height: 30.0,),
+                  const SizedBox(height: 15.0,),
                   const Text('Create \nAccount',
                       style: TextStyle(color: Colors.white, fontSize: 40)),
                   const SizedBox(height: 70.0),

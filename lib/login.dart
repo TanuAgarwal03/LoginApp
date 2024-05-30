@@ -96,19 +96,19 @@ class _LoginPageState extends State<LoginPage> {
       final data = jsonDecode(response.body);
       String token = data['token'];
 
-      if (token != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OtpVerificationPage(email: username),
-          ),
-        );
-      } else {
-        setState(() {
-          _errorMessage =
-              'Failed to check account status. Please try again later.';
-        });
-      }
+        if (token != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtpVerificationPage(email: username),
+            ),
+          );
+        } else {
+          setState(() {
+            _errorMessage =
+                'Failed to check account status. Please try again later.';
+          });
+        }
     } else {
       setState(() {
         _errorMessage = 'Invalid username or password.';

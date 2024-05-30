@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:login_page/change_password.dart';
+import 'package:login_page/reset_password.dart';
 // import 'package:login_page/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/home_page.dart';
@@ -24,6 +25,7 @@ class _MyAppState extends State<MyApp> {
     return const MaterialApp(
       debugShowCheckedModeBanner: false, 
       home: LoginPage(),
+      // home: ResetPasswordPage(),
     );
   }
 }

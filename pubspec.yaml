@@ -70,6 +70,8 @@ flutter:
   assets:
     - assets/image/ic1_launcher.png
     - assets/image/login.png
+    - assets/image/forgetpwd.jpg
+    - assets/image/resetpwd.jpg
     
   #   - images/a_dot_ham.jpeg
 
