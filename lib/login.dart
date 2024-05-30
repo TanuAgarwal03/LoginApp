@@ -117,117 +117,173 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (_errorMessage.isNotEmpty)
-            Text(
-              _errorMessage,
-              style: const TextStyle(color: Colors.red),
-            ),
-          const Center(
-          child: CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage('assets/image/ic1_launcher.png'),
-          ),
-          ),
-          
-          const SizedBox(height: 20.0),
-          
-          ListTile(
-            leading: const CircleAvatar(
-              child: Icon(Icons.person),
-            ),
-            title: TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Username',
-                hintText: 'Enter username'
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        padding: EdgeInsets.all(30.0),
+        width: MediaQuery.of(context).size.width*1,
+        height: MediaQuery.of(context).size.height*1,
+
+        decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/image/login.png'),fit: BoxFit.fill),
               ),
-            ),
-          ),
-          const SizedBox(height: 10.0),
-          ListTile(
-            leading: const CircleAvatar(
-              child: Icon(Icons.lock),
-            ),
-            title: TextFormField(
-              controller: _passwordController,
-              obscureText: !_passwordVisible,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: 'Password',
-                hintText: 'Enter valid password',
-                suffixIcon: IconButton(
-                  icon: Icon(_passwordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off),
-                  onPressed: () {
-                    setState(() {
-                      _passwordVisible = !_passwordVisible;
-                    });
-                  },
+        child: SingleChildScrollView(
+          child: Column(
+          
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40.0),
+            const Text('Welcome \nBack !' , style: TextStyle(color: Colors.white, fontSize: 40 )),
+            if (_errorMessage.isNotEmpty)
+              Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
+            const SizedBox(height: 150.0),
+            ListTile(
+              title: TextFormField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 228, 226, 226),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 90, 89, 89)),
+                  ),
+                  labelText: 'Username',
+                  hintText: 'Enter username',
                 ),
               ),
             ),
-          ),
 
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ForgetPasswordPage()),
-                  );
-                },
-                child: const Text(
-                  'Forget password ?',
-                  style: TextStyle(fontSize: 14, color: Colors.blue),
+            const SizedBox(height: 10.0),
+            ListTile(
+              title: TextFormField(
+                controller: _passwordController,
+                obscureText: !_passwordVisible,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 228, 226, 226),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 90, 89, 89)),
+                  ),
+                  labelText: 'Password',
+                  hintText: 'Enter valid password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-
-          
-          const SizedBox(height: 20.0),
-          FilledButton(
-            onPressed: _login,
-            style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.blue)),
-            child: const Text('Login'),
-          ),
-          
-          const SizedBox(height: 10.0),
-          Center(child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Create a new account.', textAlign: TextAlign.center),
-                Padding( 
-                  padding: const EdgeInsets.only(left:1.0), 
-                  child: InkWell( 
-                    onTap: (){ 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const SignUpPage()),
-                      ); 
-                    }, 
-                      child: const Text('Sign Up.', style: TextStyle(fontSize: 14, color: Colors.blue))), 
-                ) 
-              ],
+            const SizedBox(height: 40.0),
+            Center(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(50.0, 0.0, 10.0, 0.0),
+                    child: InkWell(
+                        child: Text('Sign In',
+                            style: TextStyle(
+                                fontSize: 30,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,))),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20.0, 0.0, 35.0, 0.0),
+                    child: FloatingActionButton.small(
+                      onPressed: () {
+                        _login();
+                      },
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            100.0), // Ensures the button is circular
+                      ),
+                      backgroundColor: Color.fromARGB(255, 114, 112, 112),
+                      child: const Icon(Icons.arrow_forward_rounded),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ) ,
-        ],
+            const SizedBox(
+              height: 20.0,
+            ),
+
+            Center(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(40.0),
+                    child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SignUpPage()),
+                          );
+                        },
+                        child: const Text('Sign Up',
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                                decoration: TextDecoration.underline))),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(25.0),
+                    child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgetPasswordPage()),
+                          );
+                        },
+                        child: const Text('Forget Password?',
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                                decoration: TextDecoration.underline))),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+        )
       ),
-    ),
-  );
-}
+    );
+  }
 }

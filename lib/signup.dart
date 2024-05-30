@@ -16,7 +16,8 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
@@ -40,7 +41,8 @@ class _SignUpPageState extends State<SignUpPage> {
   Future<void> _fetchCountries() async {
     try {
       _isLoading = true;
-      final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
+      final response = await http.get(
+          Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -56,7 +58,7 @@ class _SignUpPageState extends State<SignUpPage> {
           _isLoading = false;
         });
       } else {
-        _isLoading  = false;
+        _isLoading = false;
         throw Exception('Failed to load countries');
       }
     } catch (e) {
@@ -73,14 +75,17 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _fetchStates(int countryId) async {
     try {
-      final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/state/'));
+      final response = await http.get(
+          Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/state/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
         List<dynamic> states = parsedResponse['results'];
 
         setState(() {
-          _states = states.where((state) => state['country'] == countryId).map<Map<String, dynamic>>((state) {
+          _states = states
+              .where((state) => state['country'] == countryId)
+              .map<Map<String, dynamic>>((state) {
             return {
               'id': state['id'],
               'name': state['name'],
@@ -126,8 +131,8 @@ class _SignUpPageState extends State<SignUpPage> {
         'mobile': _mobileController.text.trim(),
         'fcm_type': _selectedFcmType,
         'country': _selectedCountry.toString(),
-        'state': _selectedState?.toString(), 
-        'locate': '',        
+        'state': _selectedState?.toString(),
+        'locate': '',
       },
     );
 
@@ -145,8 +150,8 @@ class _SignUpPageState extends State<SignUpPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => OtpVerificationPage(email: _emailController.text.trim())
-          ),
+            builder: (context) =>
+                OtpVerificationPage(email: _emailController.text.trim())),
       );
     } else {
       print('Sign up failed');
@@ -160,136 +165,374 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign Up'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(50.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                ),
-              ),
-              const SizedBox(height: 15.0),
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                ),
-              ),
-              const SizedBox(height: 15.0),
-              TextField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'First name',
-                ),
-              ),
-              const SizedBox(height: 15.0),
-              TextField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last name',
-                ),
-              ),
-              const SizedBox(height: 15.0),
-              TextField(
-                controller: _mobileController,
-                decoration: const InputDecoration(
-                  labelText: 'Mobile No.',
-                ),
-              ),
-              const SizedBox(height: 15.0),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 15.0),
-              TextField(
-                controller: _confirmPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 15.0),
-
-              DropdownButtonFormField<int>(
-                hint: const Text('Select country'),
-                value: _selectedCountry,
-                onChanged: (int? value) {
-                  setState(() {
-                    _selectedCountry = value;
-                    _selectedState = null;
-                    _states = [];
-                  });
-                  if (value != null) {
-                    _fetchStates(value);
-                  }
-                },
-                items: _countries.map<DropdownMenuItem<int>>((country) {
-                  return DropdownMenuItem<int>(
-                    key: Key(country['name']),
-                    value: country['id'],
-                    child: Text(country['name']),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
-                hint: const Text('Select State'),
-                value: _selectedState,
-                onChanged: (int? value) {
-                  setState(() {
-                    _selectedState = value;
-                  });
-                },
-                items: _states.map<DropdownMenuItem<int>>((state) {
-                  return DropdownMenuItem<int>(
-                    key: Key(state['name']),
-                    value: state['id'],
-                    child: Text(state['name']),
-                  );
-                }).toList(),
-              ),
-
-              if (_errorMessage.isNotEmpty)
-                Text(
-                  _errorMessage,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              const SizedBox(height: 15.0),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _signUp,
-                  child: const Text('Sign Up'),
-                ),
-              ),
-              const SizedBox(height: 20.0),
-              Center(
-                child:TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                );
-              },
-              child: const Text('Already have an account ? LOGIN'),
+        // appBar: AppBar(
+        //   backgroundColor: Colors.transparent,
+        //   title: const Text(''),
+        // ),
+        body: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                  image: AssetImage('assets/image/login.png'),
+                  fit: BoxFit.fill),
             ),
-              )
-              
-            ],
-          ),
-        ),
-      ),
-    );
+            padding: const EdgeInsets.fromLTRB(30.0, 10.0, 30.0, 30.0),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  FloatingActionButton.small(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
+                      );
+                    },
+                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          100.0), // Ensures the button is circular
+                                    ),
+                    backgroundColor: Colors.white,
+                    child:  const Icon(Icons.arrow_back),
+                  ),
+                  const SizedBox(height: 30.0,),
+                  const Text('Create \nAccount',
+                      style: TextStyle(color: Colors.white, fontSize: 40)),
+                  const SizedBox(height: 70.0),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          if (_errorMessage.isNotEmpty)
+                            Text(
+                              _errorMessage,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _usernameController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'Username',
+                                hintText: 'Enter username',
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'Email',
+                                hintText: 'Enter email address',
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _firstNameController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'First name',
+                                hintText: 'Enter first name',
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _lastNameController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'Last name',
+                                hintText: 'Enter last name',
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _mobileController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'Mobile no.',
+                                hintText: 'Enter mobile no.',
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _passwordController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'Password',
+                                hintText: 'Enter password',
+                              ),
+                              obscureText: true,
+                            ),
+                          ),
+                          ListTile(
+                            title: TextFormField(
+                              controller: _confirmPasswordController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                                labelText: 'Confirm Password',
+                                hintText: 'confirm password',
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            title: DropdownButtonFormField<int>(
+                              hint: const Text('Select country'),
+                              value: _selectedCountry,
+                              onChanged: (int? value) {
+                                setState(() {
+                                  _selectedCountry = value;
+                                  _selectedState = null;
+                                  _states = [];
+                                });
+                                if (value != null) {
+                                  _fetchStates(value);
+                                }
+                              },
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                              ),
+                              items: _countries
+                                  .map<DropdownMenuItem<int>>((country) {
+                                return DropdownMenuItem<int>(
+                                  key: Key(country['name']),
+                                  value: country['id'],
+                                  child: Text(country['name']),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          ListTile(
+                            title: DropdownButtonFormField<int>(
+                              hint: const Text('Select State'),
+                              value: _selectedState,
+                              onChanged: (int? value) {
+                                setState(() {
+                                  _selectedState = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor:
+                                    const Color.fromARGB(255, 228, 226, 226),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide:
+                                      const BorderSide(color: Colors.blue),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  borderSide: const BorderSide(
+                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                ),
+                              ),
+                              items:
+                                  _states.map<DropdownMenuItem<int>>((state) {
+                                return DropdownMenuItem<int>(
+                                  key: Key(state['name']),
+                                  value: state['id'],
+                                  child: Text(state['name']),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 40.0),
+                          Center(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Padding(
+                                  padding:
+                                      EdgeInsets.fromLTRB(50.0, 0.0, 10.0, 0.0),
+                                  child: InkWell(
+                                      child: Text('Sign Up',
+                                          style: TextStyle(
+                                            fontSize: 30,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ))),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      20.0, 0.0, 35.0, 0.0),
+                                  child: FloatingActionButton.small(
+                                    onPressed: () {
+                                      _signUp();
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          100.0), // Ensures the button is circular
+                                    ),
+                                    backgroundColor:
+                                        Color.fromARGB(255, 114, 112, 112),
+                                    child:
+                                        const Icon(Icons.arrow_forward_rounded),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30.0),
+                          Center(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(30.0),
+                                  child: InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const LoginPage()),
+                                        );
+                                      },
+                                      child: const Text(
+                                          'Already have an account ? Sign In',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.black,
+                                              decoration:
+                                                  TextDecoration.underline))),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ])));
   }
 }
