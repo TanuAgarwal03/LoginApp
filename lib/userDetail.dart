@@ -37,7 +37,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
     token = prefs.getString('token') ?? token;
     userID = prefs.getString('userId') ?? userID;
     
-    final response = await http.get(Uri.parse('http://3.110.219.27:8005/stapi/v1/profile/'),
+    final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/profile/'),
       headers: {
         'Authorization': 'Token $token',
       },
@@ -88,7 +88,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
                       child: Image.network(
                         userdata['image'].startsWith('http://') || userdata['image'].startsWith('https://')
                             ? userdata['image']
-                            : 'http://3.110.219.27:8005/stapi/v1/profile/${userdata['image']}',
+                            : 'https://test.securitytroops.in/stapi/v1/profile/${userdata['image']}',
                         height: 100,
                         width: 100,
                         fit: BoxFit.cover,

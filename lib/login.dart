@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
     _selectedFcmType = 'android';
 
     final response = await http.post(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/login/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/login/'),
       body: {
         'username': username,
         'password': password,

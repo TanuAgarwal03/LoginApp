@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:login_page/change_password.dart';
-import 'package:login_page/reset_password.dart';
+// import 'package:login_page/reset_password.dart';
 // import 'package:login_page/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/home_page.dart';
@@ -74,8 +74,11 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitles[_selectedIndex]),
-        backgroundColor: Colors.lightBlue[50],
+        title: Text(_appBarTitles[_selectedIndex] , style: const TextStyle(color: Colors.white),),
+        backgroundColor: Colors.blue,
+        iconTheme: const IconThemeData(
+            color: Colors.white,
+          ),
       ),
       drawer: Drawer(
         child: ListView(
@@ -142,8 +145,30 @@ class _MainPageState extends State<MainPage> {
           ],
         ),
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      // body: Center(
+      //   child: _widgetOptions.elementAt(_selectedIndex),
+      // ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   items: const <BottomNavigationBarItem>[
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.home),
+      //       label: 'Blogs',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.logout),
+      //       label: 'Logout',
+      //     ),
+      //   ],
+      //   currentIndex: _selectedIndex,
+      //   selectedItemColor: Colors.amber[800],
+      //   backgroundColor: Colors.lightBlue[50],
+      //   onTap: _onItemTapped,
+      // ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 10.0), // Adjust the top padding as needed
+        child: Center(
+          child: _widgetOptions.elementAt(_selectedIndex),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -157,10 +182,11 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Colors.blue,
         backgroundColor: Colors.lightBlue[50],
         onTap: _onItemTapped,
       ),
     );
+    
   }
 }

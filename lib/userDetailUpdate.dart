@@ -53,7 +53,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://3.110.219.27:8005/stapi/v1/profile/${widget.userId}/'),
+        Uri.parse('https://test.securitytroops.in/stapi/v1/profile/${widget.userId}/'),
         headers: {
           'Authorization': 'token ${widget.token}',
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     try {
       _isLoading = true;
       final response = await http.get(
-          Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
+          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/country/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -135,7 +135,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   Future<void> _fetchStates(int countryId) async {
     try {
       final response = await http.get(
-          Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/state/'));
+          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -241,7 +241,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       var request = http.MultipartRequest(
         'PATCH',
         Uri.parse(
-            'http://3.110.219.27:8005/stapi/v1/profile/${widget.userId}/'),
+            'https://test.securitytroops.in/stapi/v1/profile/${widget.userId}/'),
       );
       request.headers['Authorization'] = 'token ${widget.token}';
       request.fields['username'] = username;

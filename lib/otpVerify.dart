@@ -23,7 +23,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     final userId = prefs.getString('userId') ?? '';
 
     final response = await http.post(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/active-account/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/active-account/'),
       body: {
         'otp': _otpController.text.trim(),
         'email': widget.email,

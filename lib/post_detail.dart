@@ -4,13 +4,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class PostDetailPage extends StatefulWidget {
   final String slug;
   final String postTitle;
-  const PostDetailPage(
-      {super.key, required this.slug, required this.postTitle });
-
+  const PostDetailPage({super.key, required this.slug, required this.postTitle });
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -64,7 +61,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     });
     try {
       final response = await http.get(
-        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/posts/${widget.slug}/'),
+        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
         headers: {
           'Authorization': 'Token $token',
         },
@@ -81,22 +78,23 @@ class _PostDetailPageState extends State<PostDetailPage> {
         setState(() {
           _isLoading = false;
           _hasError = true;
-          print('Error loading post detail');
         });
+        print('Failed to load post details: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
         _hasError = true;
-        print('Exception occurred: $e');
       });
+      print('Error loading post details: $e');
     }
   }
+
   Future<void> _fetchCategories() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
     final response = await http.get(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/categories/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/categories/'),
       headers: {'Authorization': 'Token $token'},
     );
     if (response.statusCode == 200) {
@@ -117,7 +115,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
     final response = await http.get(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/tags/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/tags/'),
       headers: {'Authorization': 'Token $token'},
     );
     if (response.statusCode == 200) {
@@ -143,7 +141,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
     final response = await http.get(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/users/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/users/'),
       headers: {'Authorization': 'Token $token'},
     );
     if (response.statusCode == 200) {
@@ -168,7 +166,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/posts/${widget.slug}/'),
+        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
         headers: {
           'Authorization': 'Token $token',
         },
@@ -184,12 +182,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
           _isLoading = false;
           _hasError = true;
         });
+        print('Failed to load comments: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
         _hasError = true;
       });
+      print('Error loading comments: $e');
     }
   }
 
@@ -204,7 +204,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
+        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/comment/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -228,17 +228,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
       } else {
         setState(() {
           _isLoading = false;
-          print('Failed to post comment');
         });
+        print('Failed to add comment: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
-        print('Exception occurred: $e');
       });
+      print('Error adding comment: $e');
     }
   }
- Future<void> _addReply(int commentId, String reply) async {
+
+  Future<void> _addReply(int commentId, String reply) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
     int postId = _post!['id'];
@@ -249,7 +250,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://3.110.219.27:8005/stapi/v1/blogs/comment/'),
+        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/comment/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -274,130 +275,216 @@ class _PostDetailPageState extends State<PostDetailPage> {
       } else {
         setState(() {
           _isLoading = false;
-          print('Failed to post reply');
         });
+        print('Failed to add reply: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
-        print('Exception occurred: $e');
       });
+      print('Error adding reply: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Post Detail')),
-        body: const Center(child: Text('unavailable')),
+        appBar: AppBar(title: const Text('Post Detail',  style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        backgroundColor: Colors.blue ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     } else if (_hasError) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Post Detail')),
+        appBar: AppBar(
+          title: const Text('Post Detail',  style: TextStyle(color: Colors.white)),
+          iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+          backgroundColor: Colors.blue ,
+          ),
         body: const Center(child: Text('Failed to load post details')),
       );
     } else {
       return Scaffold(
-        appBar: AppBar(title: const Text('Post Detail')),
-        body: SingleChildScrollView(
+        appBar: AppBar(title: const Text('Post Detail',style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        backgroundColor: Colors.blue,),
+        body:  SingleChildScrollView(
           child: _post != null
               ? Padding(
-                  padding: const EdgeInsets.all(22),
-                  
+                  padding: const EdgeInsets.all(25.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      
-                      Text(postTitle,
-                          style: const TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 30),
-                      Image.network(_post!['featured'].startsWith('http://') ||
-                                      _post!['featured'].startsWith('https://')
-                                  ? _post!['featured']
-                                  : 'http://3.110.219.27:8005/stapi/v1/blogs/posts/${_post!['featured']}',
-                              width: 400,
-                              height: 250,
-                              fit: BoxFit.cover),
-
-                      
-                      const SizedBox(height: 40),
-
-                      HtmlWidget(
-                        htmlcode,                             
+                      Text(
+                        postTitle,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                      const SizedBox(height: 20),
 
-                      const SizedBox(height: 10),
-                      Text('Author: ${_author[_post!['author']]}',
-                          style: const TextStyle(fontSize: 16)),
+                      Padding(padding: EdgeInsets.all(20.0),child: Image.network(
+                        _post!['featured'].startsWith('http://') ||
+                                _post!['featured'].startsWith('https://')
+                            ? _post!['featured']
+                            : 'https://test.securitytroops.in/stapi/v1/blogs/posts/${_post!['featured']}',
+                        width: double.infinity,
+                        height: 250,
+                        fit: BoxFit.cover,
+                      ),),
+                      
+                      Padding(
+                        padding: const EdgeInsets.all(20.0), 
+                        child: HtmlWidget(htmlcode , textStyle: const TextStyle(fontSize: 16),),
+                        ),
+                      // const SizedBox(height: 20),
+                      Text(
+                        'Author: ${_author[_post!['author']]}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       const SizedBox(height: 5),
-                      Text('Created Date: ${_post!['timestamp']}',
-                          style: const TextStyle(fontSize: 16)),
+                      Text(
+                        'Created Date: ${_post!['timestamp']}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       const SizedBox(height: 5),
-                      Text('Published Date: ${_post!['utimestamp']}',
-                          style: const TextStyle(fontSize: 16)),
+                      Text(
+                        'Published Date: ${_post!['utimestamp']}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       const SizedBox(height: 5),
-                      Text('Tags: ${_getTagTitles(_post!['tag'])}',
-                          style: const TextStyle(fontSize: 16)),
+                      Text(
+                        'Tags: ${_getTagTitles(_post!['tag'])}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       const SizedBox(height: 5),
-                      Text('Category: ${_categoryMap[_post!['category']]}',
-                          style: const TextStyle(fontSize: 16)),
+                      Text(
+                        'Category: ${_categoryMap[_post!['category']]}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       const SizedBox(height: 20),
                       const Text(
                         'Comments:',
                         style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       _comments.isNotEmpty
                           ? Column(
                               children: _comments
-                              .map((comment) => Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          ListTile(
-                                            title: Text(comment['content']),
-                                            subtitle: Text('By: ${comment['users']['username']}'),
+                                  .map(
+                                    (comment) => Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ListTile(
+                                          title: Text(comment['content']),
+                                          subtitle: Text(
+                                            'By: ${comment['users']['username']}',
                                           ),
-                                          const SizedBox(height: 10),
-                                          Column(
-                                            children: (comment['replies'] as List)
-                                                .map((reply) => ListTile(
-                                                      title: Text(reply['content']),
-                                                      subtitle: Text('By: ${reply['users']['username']}'),
-                                                    ))
-                                                .toList(),
-                                          ),
-                                          TextField(
-                                            controller: _replyControllers[comment['id']] ??= TextEditingController(),
-                                            decoration: const InputDecoration(
-                                              hintText: 'Add a reply...',
-                                              border: OutlineInputBorder(),
+                                        ),
+                                        Column(
+                                          children: (comment['replies'] as List)
+                                              .map(
+                                                (reply) => Padding(
+                                                  padding: const EdgeInsets.only(left: 20.0),
+                                                  child: ListTile(
+                                                  title: Text(reply['content']),
+                                                  subtitle: Text(
+                                                    'By: ${reply['users']['username']}',
+                                                  ),
+                                                ),)
+                                              )
+                                              .toList(),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 20.0 , right: 20.0),
+                                          child: TextFormField(
+                                              controller: _replyControllers[comment['id']] ??= TextEditingController(),
+                                              decoration: InputDecoration(
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(20.0),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(20.0),
+                                                  borderSide: const BorderSide(color: Colors.black),
+                                                ),
+                                                enabledBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(20.0),
+                                                  borderSide: const BorderSide(
+                                                      color: Color.fromARGB(255, 90, 89, 89)),
+                                                ),
+                                                labelText: 'Add a reply',
+                                                // suffixIcon: IconButton(
+                                                //   icon: const Icon(Icons.send),
+                                                //   onPressed: () {
+                                                //     _addReply(comment['id'], _replyControllers[comment['id']]!.text,);
+                                                //   },)
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 25.0),
+                                          child: ElevatedButton(
                                             onPressed: () {
-                                              _addReply(comment['id'], _replyControllers[comment['id']]!.text);
+                                              _addReply(
+                                                comment['id'],
+                                                _replyControllers[
+                                                        comment['id']]!
+                                                    .text,
+                                              );
                                             },
-                                            child: const Text('Reply'),
+                                            style: ElevatedButton.styleFrom(
+                                              minimumSize: const Size(5.0, 38.0),
+                                              backgroundColor: Colors.blue,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(4.0)
+                                              )
+                                            ),
+                                            child: const Text('Reply', style: TextStyle(color: Colors.white),),
                                           ),
-                                          const SizedBox(height: 20),
-                                        ],
-                                      ))
+                                        ),
+                                        const Divider(),
+                                      ],
+                                    ),
+                                  )
                                   .toList(),
                             )
                           : const Text('No comments yet.'),
-                      const SizedBox(height: 10),
-                      TextField(
+                      const SizedBox(height: 20),
+                      
+                      TextFormField(
                         controller: _commentController,
-                        decoration: const InputDecoration(
-                          hintText: 'Add a comment...',
-                          border: OutlineInputBorder(                  
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: 'Write a comment',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)
                           ),
-                        
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                            borderSide: const BorderSide(color: Color.fromARGB(255, 117, 172, 218)),
+                          ),
+                          // enabledBorder: OutlineInputBorder(
+                          //   borderRadius: BorderRadius.circular(20.0),
+                          //   borderSide: const BorderSide(
+                          //       color: Color.fromARGB(255, 90, 89, 89)),
+                          // ),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -405,14 +492,21 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         onPressed: () {
                           _addComment(_commentController.text);
                         },
-                        child: const Text('Submit'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          minimumSize: const Size(10.0, 40.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6.0),
+                          ) 
+                        ),
+                        child: const Text('Comment' , style: TextStyle(color: Colors.white),),
                       ),
                     ],
                   ),
                 )
               : const Center(child: Text('Post not found')),
         ),
-      );
+        );
     }
   }
 }

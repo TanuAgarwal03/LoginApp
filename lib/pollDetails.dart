@@ -50,7 +50,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
     });
 
     final response = await http.post(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/polls/answer/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/polls/answer/'),
       headers: {
         'Authorization': 'token $token',
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
         selectedOptionTitle = pollOptions
             .firstWhere((option) => option['id'].toString() == optionId)['title'];
         _isLoading = false;
-        _canVote = false; // After submitting the answer, the user can no longer vote.
+        _canVote = false; 
       });
     } else {
       setState(() {
@@ -83,7 +83,11 @@ class _PollDetailPageState extends State<PollDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Poll Details'),
+        title: const Text('Poll Details', style: TextStyle(color: Colors.white), textAlign: TextAlign.center,),
+        backgroundColor: Colors.blue,
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -109,11 +113,11 @@ class _PollDetailPageState extends State<PollDetailPage> {
                             fontSize: 16,
                           ),
                         ),
-                        const SizedBox(height: 8),
                         Text(
                           selectedOptionTitle,
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
+                            color: Colors.green,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -124,6 +128,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
                                     option['title'],
@@ -145,6 +150,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
                         itemBuilder: (context, index) {
                           final option = pollOptions[index];
                           return Padding(
+                          
                             padding:
                                 const EdgeInsets.symmetric(vertical: 8.0),
                             child: ElevatedButton(

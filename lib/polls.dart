@@ -35,7 +35,7 @@ class _PollListPageState extends State<PollListPage> {
     });
 
     final response = await http.get(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/polls/question/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/polls/question/'),
       headers: {
         'Authorization': 'token $token',
       },
@@ -55,41 +55,140 @@ class _PollListPageState extends State<PollListPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // @override
+  // Widget build(BuildContext context) {
     
+  //   if (_isLoading) {
+  //     return const Scaffold(
+  //       body: Center(child: CircularProgressIndicator()),
+  //     );
+  //   } else {
+  //     return Scaffold(
+  //     appBar: AppBar(
+        // title: const Text('Polls', style: TextStyle(color: Colors.white), textAlign: TextAlign.center,),
+        // backgroundColor: Colors.blue,
+        // iconTheme: const IconThemeData(
+        //   color: Colors.white,
+        // ),
+  //     ),
+  //       body: polls.isEmpty
+  //           ? const Center(child: Text('No polls available'))
+  //           : ListView.builder(
+  //               itemCount: polls.length,
+  //               itemBuilder: (context, index) {
+  //                 final poll = polls[index];
+  //                 return ListTile(
+  //                   title: Text(poll['title']),
+  //                   onTap: () {
+  //                     Navigator.push(
+  //                       context,
+  //                       MaterialPageRoute(
+  //                         builder: (context) => PollDetailPage(
+  //                           token: token,
+  //                           userId: userId,
+  //                           poll: poll,
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                 );
+  //               },
+  //             ),
+  //     );
+  //   }
+  // }
+
+   @override
+  Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Polls', style: TextStyle(color: Colors.white), textAlign: TextAlign.center,),
+        backgroundColor: Colors.blue,
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     } else {
       return Scaffold(
-      appBar: AppBar(
-        title: Text('Polls'),
-      ),
-        body: polls.isEmpty
+        appBar: AppBar(
+          title: const Text('Polls', style: TextStyle(color: Colors.white), textAlign: TextAlign.center,),
+        backgroundColor: Colors.blue,
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        ),
+        body: Container(
+          color: Colors.white,
+          child: polls.isEmpty
             ? const Center(child: Text('No polls available'))
             : ListView.builder(
                 itemCount: polls.length,
                 itemBuilder: (context, index) {
                   final poll = polls[index];
-                  return ListTile(
-                    title: Text(poll['title']),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PollDetailPage(
-                            token: token,
-                            userId: userId,
-                            poll: poll,
+                  return Padding(padding: const EdgeInsets.all(5.0),
+                  child:Card.outlined(
+                    elevation: 10.0,
+                    color: Color.fromARGB(255, 209, 228, 243),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+
+                    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                      title: Text(
+                        poll['title'],
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Padding (padding: const EdgeInsets.fromLTRB(150.0, 8.0, 10.0, 0),
+                      child: ElevatedButton(
+                        onPressed: (){
+                          Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PollDetailPage(
+                              token: token,
+                              userId: userId,
+                              poll: poll,
+                            ),
                           ),
+                        );
+                        }, 
+                        style: ElevatedButton.styleFrom(
+                          // minimumSize: const Size(10.0, 20.0),
+                          backgroundColor: Color.fromARGB(255, 162, 203, 233),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5.0)
+                          )
                         ),
-                      );
-                    },
+                        child: const Text('Tap to vote' , style: TextStyle(color: Colors.black , fontSize: 16),)),
+                        ),
+                        
+                      // onTap: () {
+                      //   Navigator.push(
+                      //     context,
+                      //     MaterialPageRoute(
+                      //       builder: (context) => PollDetailPage(
+                      //         token: token,
+                      //         userId: userId,
+                      //         poll: poll,
+                      //       ),
+                      //     ),
+                      //   );
+                      // },
+                    ),
+                    
+                    
+                  )
                   );
+                   
                 },
               ),
+      )
       );
     }
   }

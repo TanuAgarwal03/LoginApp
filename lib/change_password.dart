@@ -174,7 +174,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     String newPassword = _newPasswordController.text.trim();
 
     final response = await http.post(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/change-password/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/change-password/'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Token $token', // Replace 'Token' with your actual authentication scheme

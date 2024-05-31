@@ -42,7 +42,7 @@ class _SignUpPageState extends State<SignUpPage> {
     try {
       _isLoading = true;
       final response = await http.get(
-          Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/country/'));
+          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/country/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -76,7 +76,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Future<void> _fetchStates(int countryId) async {
     try {
       final response = await http.get(
-          Uri.parse('http://3.110.219.27:8005/stapi/v1/geolocation/state/'));
+          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -120,7 +120,7 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     final response = await http.post(
-      Uri.parse('http://3.110.219.27:8005/stapi/v1/signup/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/signup/'),
       body: {
         'username': _usernameController.text.trim(),
         'email': _emailController.text.trim(),
@@ -165,10 +165,6 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        // appBar: AppBar(
-        //   backgroundColor: Colors.transparent,
-        //   title: const Text(''),
-        // ),
         body: Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
