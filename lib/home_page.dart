@@ -66,15 +66,18 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                     final post = _posts[index];
 
                     String postTitle = post['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
+                    String postTime = post['timestamp'];
+                    // String postAuthor = post['author'].toString();
 
                     return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Card.outlined(
-                            elevation: 15,
+                            elevation: 10,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),
                             ),
                             clipBehavior: Clip.antiAliasWithSaveLayer,
+                            shadowColor: Colors.grey[300],
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -98,33 +101,50 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                                                   .startsWith('https://')
                                           ? post['thumbnail']
                                           : 'https://test.securitytroops.in/stapi/v1/blogs/posts/${post['thumbnail']}',
-                                      height: 160,
+                                      height: 140,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
                                     ),
                                   Container(
                                     padding: const EdgeInsets.fromLTRB(
-                                        15, 15, 15, 2),
+                                        12, 10, 12, 0),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: <Widget>[
                                         Text(
                                           postTitle,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 18,
-                                            color: Colors.grey[800],
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         const Divider(),
-                                      ],
-
+                                        // Text(
+                                        //   'Post by - $postAuthor',
+                                        //   style: const TextStyle(
+                                        //     fontSize: 14,
+                                        //     color: Colors.grey,
+                                        //   ),
+                                        // ),
+                                        Text(
+                                         'Post created at- $postTime',
+                                          textAlign: TextAlign.right,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[800],
+                                          ),
+                                        ),                                        
+                                      ],                                  
                                     ),
                                   ),
-                                  Container(height: 15),
+                                  Container(height: 10),
                                 ],
                               ),
-                            )));
+                            )
+                          )
+                        );
                   },
                 ),
     );

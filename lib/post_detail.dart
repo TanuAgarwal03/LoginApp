@@ -7,7 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PostDetailPage extends StatefulWidget {
   final String slug;
   final String postTitle;
-  const PostDetailPage({super.key, required this.slug, required this.postTitle });
+  const PostDetailPage(
+      {super.key, required this.slug, required this.postTitle});
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -32,6 +33,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
   final TextEditingController _commentController = TextEditingController();
   Map<int, TextEditingController> _replyControllers = {};
 
+  Map<int , bool> _expandedComments = {};
+  int? parentId;
+  // int? _replyingToCommentId;
+  // int? parentCommentId;
+  
+
   @override
   void initState() {
     super.initState();
@@ -46,10 +53,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> _loadUserDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
-    username = prefs.getString('username') ?? ''; 
+    username = prefs.getString('username') ?? '';
     email = prefs.getString('email') ?? '';
     mobile = prefs.getInt('mobile') ?? 0;
     userId = prefs.getInt('id') ?? 0;
+
+    
   }
 
   Future<void> _fetchPostDetail() async {
@@ -61,7 +70,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
     });
     try {
       final response = await http.get(
-        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
+        Uri.parse(
+            'https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
         headers: {
           'Authorization': 'Token $token',
         },
@@ -166,7 +176,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
+        Uri.parse(
+            'https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
         headers: {
           'Authorization': 'Token $token',
         },
@@ -202,6 +213,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _isLoading = true;
     });
 
+    Map<String, dynamic> requestBody = {
+      'post': postId,
+      'content': comment,
+      'email': email,
+      'mobile': mobile,
+      'name': username,
+      'user': userId,
+    };
+
+    if (parentId != null) {
+      requestBody['parent'] = parentId;
+    }
+
     try {
       final response = await http.post(
         Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/comment/'),
@@ -209,14 +233,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'post': postId,
-          'content': comment,
-          'email' : email,
-          'mobile' : mobile,
-          'name' : username,
-          'user' : userId,
-        }),
+        body: jsonEncode(requestBody),
       );
 
       if (response.statusCode == 201) {
@@ -239,83 +256,42 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
-  Future<void> _addReply(int commentId, String reply) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token') ?? '';
-    int postId = _post!['id'];
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/comment/'),
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'parent': commentId,
-          'content': reply,
-          'email': email,
-          'mobile': mobile,
-          'name': username,
-          'user': userId,
-          'post' :postId,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        _fetchComments();
-        _replyControllers[commentId]?.clear();
-        setState(() {
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        print('Failed to add reply: ${response.statusCode}');
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      print('Error adding reply: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Post Detail',  style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-        backgroundColor: Colors.blue ),
+        appBar: AppBar(
+            title: const Text('Post Detail',
+                style: TextStyle(color: Colors.white)),
+            iconTheme: const IconThemeData(
+              color: Colors.white,
+            ),
+            backgroundColor: Colors.blue),
         body: const Center(child: CircularProgressIndicator()),
       );
     } else if (_hasError) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Post Detail',  style: TextStyle(color: Colors.white)),
+          title:
+              const Text('Post Detail', style: TextStyle(color: Colors.white)),
           iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-          backgroundColor: Colors.blue ,
+            color: Colors.white,
           ),
+          backgroundColor: Colors.blue,
+        ),
         body: const Center(child: Text('Failed to load post details')),
       );
     } else {
       return Scaffold(
-        appBar: AppBar(title: const Text('Post Detail',style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
+        appBar: AppBar(
+          title:
+              const Text('Post Detail', style: TextStyle(color: Colors.white)),
+          iconTheme: const IconThemeData(
+            color: Colors.white,
+          ),
+          backgroundColor: Colors.blue,
         ),
-        backgroundColor: Colors.blue,),
-        body:  SingleChildScrollView(
+        body: SingleChildScrollView(
           child: _post != null
               ? Padding(
                   padding: const EdgeInsets.all(25.0),
@@ -331,21 +307,26 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       ),
                       const SizedBox(height: 20),
 
-                      Padding(padding: EdgeInsets.all(20.0),child: Image.network(
-                        _post!['featured'].startsWith('http://') ||
-                                _post!['featured'].startsWith('https://')
-                            ? _post!['featured']
-                            : 'https://test.securitytroops.in/stapi/v1/blogs/posts/${_post!['featured']}',
-                        width: double.infinity,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      ),),
-                      
                       Padding(
-                        padding: const EdgeInsets.all(20.0), 
-                        child: HtmlWidget(htmlcode , textStyle: const TextStyle(fontSize: 16),),
+                        padding: const EdgeInsets.all(20.0),
+                        child: Image.network(
+                          _post!['featured'].startsWith('http://') ||
+                                  _post!['featured'].startsWith('https://')
+                              ? _post!['featured']
+                              : 'https://test.securitytroops.in/stapi/v1/blogs/posts/${_post!['featured']}',
+                          width: double.infinity,
+                          height: 250,
+                          fit: BoxFit.cover,
                         ),
-                      // const SizedBox(height: 20),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: HtmlWidget(
+                          htmlcode,
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
+                      ),
                       Text(
                         'Author: ${_author[_post!['author']]}',
                         style: const TextStyle(fontSize: 16),
@@ -371,142 +352,152 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         style: const TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 20),
-                      const Text(
-                        'Comments:',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _comments.isNotEmpty
-                          ? Column(
-                              children: _comments
-                                  .map(
-                                    (comment) => Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        ListTile(
-                                          title: Text(comment['content']),
-                                          subtitle: Text(
-                                            'By: ${comment['users']['username']}',
-                                          ),
+
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              minimumSize: const Size(10.0, 40.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6.0),
+                              )),
+                          onPressed: () {
+                            showModalBottomSheet(
+                                backgroundColor: Colors.grey.shade100,
+                                showDragHandle: true,
+                                enableDrag: true,
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return Container(
+                                      height:MediaQuery.of(context).size.height *0.7,
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(0.0),
                                         ),
-                                        Column(
-                                          children: (comment['replies'] as List)
-                                              .map(
-                                                (reply) => Padding(
-                                                  padding: const EdgeInsets.only(left: 20.0),
-                                                  child: ListTile(
-                                                  title: Text(reply['content']),
-                                                  subtitle: Text(
-                                                    'By: ${reply['users']['username']}',
-                                                  ),
-                                                ),)
-                                              )
-                                              .toList(),
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 20.0 , right: 20.0),
-                                          child: TextFormField(
-                                              controller: _replyControllers[comment['id']] ??= TextEditingController(),
-                                              decoration: InputDecoration(
-                                                filled: true,
-                                                fillColor: Colors.white,
-                                                border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(20.0),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(20.0),
-                                                  borderSide: const BorderSide(color: Colors.black),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(20.0),
-                                                  borderSide: const BorderSide(
-                                                      color: Color.fromARGB(255, 90, 89, 89)),
-                                                ),
-                                                labelText: 'Add a reply',
-                                                // suffixIcon: IconButton(
-                                                //   icon: const Icon(Icons.send),
-                                                //   onPressed: () {
-                                                //     _addReply(comment['id'], _replyControllers[comment['id']]!.text,);
-                                                //   },)
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  _comments.isNotEmpty
+                                                      ? Column(
+                                                          children: _comments.map((comment) {
+                                                            bool showAllReplies = false;
+                                                            return StatefulBuilder(
+                                                              builder: (context, setState) {
+                                                                return Column(
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    ListTile(
+                                                                      title: Text(
+                                                                        '${comment['users']['username']}',
+                                                                        style: const TextStyle(
+                                                                            fontWeight: FontWeight.bold, fontSize: 14),
+                                                                      ),
+                                                                      subtitle: Column(
+                                                                        mainAxisAlignment: MainAxisAlignment.start,
+                                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                                        children: [
+                                                                          Text(comment['content'],style: const TextStyle(fontSize: 16, color: Colors.black)),
+
+                                                                          TextButton(
+                                                                            onPressed: () {
+                                                                              parentId = comment['id'];
+                                                                            }, 
+                                                                            child: 
+                                                                            Text('Reply',style: TextStyle(color: Colors.grey[600],fontWeight: FontWeight.bold,fontSize: 12)),
+                                                                            ),
+                                                                      
+                                                                          Column(
+                                                                            children: comment['replies'].take(showAllReplies ? comment['replies'].length : 1).map<Widget>((reply) {
+                                                                              return Padding(
+                                                                                padding: const EdgeInsets.only(left: 20.0),
+                                                                                child: ListTile(
+                                                                                  title: Text('${reply['users']['username']}',
+                                                                                    style: const TextStyle(
+                                                                                        fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                  ),
+                                                                                  subtitle: Text(reply['content'],
+                                                                                    style: const TextStyle(
+                                                                                        fontSize: 16, color: Colors.black),
+                                                                                  ),
+                                                                                ),
+                                                                              );
+                                                                            }).toList(),
+                                                                          ),
+                                                                          if (comment['replies'].length > 1)
+                                                                            TextButton(
+                                                                              onPressed: () {
+                                                                                setState(() {
+                                                                                  showAllReplies = !showAllReplies;
+                                                                                });
+                                                                              },
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
+                                                                                child: Text(showAllReplies
+                                                                                    ? 'Hide'
+                                                                                    : 'Show all replies (${comment['replies'].length})', 
+                                                                                    style: TextStyle(color: Colors.grey[700] , fontWeight: FontWeight.bold, fontSize: 14)
+                                                                                    ),)
+                                                                            ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                    const Divider(),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          }).toList(),
+                                                        )
+                                                      : const Text('No comments yet.'),
+                                                ],
                                               ),
                                             ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 25.0),
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              _addReply(
-                                                comment['id'],
-                                                _replyControllers[
-                                                        comment['id']]!
-                                                    .text,
-                                              );
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              minimumSize: const Size(5.0, 38.0),
-                                              backgroundColor: Colors.blue,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(4.0)
-                                              )
-                                            ),
-                                            child: const Text('Reply', style: TextStyle(color: Colors.white),),
                                           ),
-                                        ),
-                                        const Divider(),
-                                      ],
-                                    ),
-                                  )
-                                  .toList(),
-                            )
-                          : const Text('No comments yet.'),
-                      const SizedBox(height: 20),
-                      
-                      TextFormField(
-                        controller: _commentController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: 'Write a comment',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.0)
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                            borderSide: const BorderSide(color: Color.fromARGB(255, 117, 172, 218)),
-                          ),
-                          // enabledBorder: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(20.0),
-                          //   borderSide: const BorderSide(
-                          //       color: Color.fromARGB(255, 90, 89, 89)),
-                          // ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          _addComment(_commentController.text);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          minimumSize: const Size(10.0, 40.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6.0),
-                          ) 
-                        ),
-                        child: const Text('Comment' , style: TextStyle(color: Colors.white),),
-                      ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Column(
+                                              children: [
+                                                TextFormField(
+                                                  controller: _commentController,
+                                                  decoration: InputDecoration(
+                                                      filled: true,
+                                                      fillColor: Colors.white,
+                                                      hintText: parentId == null ? 'Add a new comment' : 'Reply to comment',
+                                                      border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(15.0)),
+                                                      focusedBorder: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(15.0),
+                                                        borderSide: const BorderSide(
+                                                            color: Colors.black),
+                                                      ),
+                                                      suffixIcon: IconButton(
+                                                          onPressed: () {
+                                                            _addComment(_commentController.text);
+                                                          },
+                                                          icon: const Icon(Icons.send))),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  );
+                                }
+                            );
+                          },
+                          child: const Text('Add Comment' , style: TextStyle(color: Colors.white)),                          
+                      )
                     ],
                   ),
                 )
               : const Center(child: Text('Post not found')),
         ),
-        );
+                    
+      );
     }
   }
 }
