@@ -21,6 +21,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
   String chosenOptionId = "";
   int questionId = 0;
   String selectedOptionTitle = "";
+  String? imagePoll;
 
   List<Map<String, dynamic>> pollOptions = [];
 
@@ -33,6 +34,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
     pollOptions = List<Map<String, dynamic>>.from(widget.poll['option']);
     questionId = widget.poll['id'];
     _canVote = !widget.poll['result'];
+    imagePoll = widget.poll['image'];
 
     if (!_canVote) {
       final selectedOption = pollOptions.firstWhere(
@@ -69,7 +71,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
         selectedOptionTitle = pollOptions
             .firstWhere((option) => option['id'].toString() == optionId)['title'];
         _isLoading = false;
-        _canVote = false; 
+        _canVote = false;
       });
     } else {
       setState(() {
@@ -83,7 +85,11 @@ class _PollDetailPageState extends State<PollDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Poll Details', style: TextStyle(color: Colors.white), textAlign: TextAlign.center,),
+        title: const Text(
+          'Poll Details',
+          style: TextStyle(color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
         backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(
           color: Colors.white,
@@ -91,85 +97,205 @@ class _PollDetailPageState extends State<PollDetailPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pollQuestion,
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  if (!_canVote)
-                    Column(
-                      children: [
-                        const Text(
-                          'You have already voted for:',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          selectedOptionTitle,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Column(
-                          children: pollOptions.map<Widget>((option) {
-                            return Padding(
-                              padding: const EdgeInsets.all(2.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    option['title'],
-                                    style: const TextStyle(fontSize: 18),
-                                    textAlign: TextAlign.start,
-                                  ),
-                                  Text('${option['percent']}%'),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pollQuestion,
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                  if (_canVote)
-                    Expanded(
-                      child: ListView.builder(
+                    const SizedBox(height: 10),
+                    imagePoll != null
+                        ? Image.network(imagePoll! , 
+                        height: MediaQuery.of(context).size.height*0.3,width: MediaQuery.of(context).size.width
+                        )
+                        : Container(),
+                    const SizedBox(height: 10),
+                    if (!_canVote)
+                      Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'You have already voted for : ',
+                                textAlign: TextAlign.start,
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                selectedOptionTitle,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Column(
+                            children: pollOptions.map<Widget>((option) {
+                              return Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        option['image'] != null
+                                            ? Image.network(
+                                                option['image'],
+                                                height: 80,
+                                                width: 150,
+                                              )
+                                            : Container(
+                                                width: 200,
+                                              ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment
+                                                  .spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      20.0, 10.0, 20.0, 0.0),
+                                              child: Text(
+                                                option['title'],
+                                                style: TextStyle(
+                                                    fontSize: 18,
+                                                    color: Colors.grey[850]),
+                                                textAlign: TextAlign.start,
+                                              ),
+                                            ),
+                                            Text(
+                                              '${option['percent']}%',
+                                              style: TextStyle(
+                                                  color: Colors.green[900],
+                                                  fontSize: 12,
+                                                  fontWeight:
+                                                      FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 20.0, right: 20.0),
+                                      child: LinearProgressIndicator(
+                                        value: (option['percent']) / 100,
+                                        valueColor:
+                                            const AlwaysStoppedAnimation<Color>(
+                                                Colors.blue),
+                                        minHeight: 6.0,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 20.0),
+                                      child: Text(
+                                        "${option['vote']} votes",
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10.0)
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    if (_canVote)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
                         itemCount: pollOptions.length,
                         itemBuilder: (context, index) {
                           final option = pollOptions[index];
+                          bool _isExpired = false;
+                          String expireMessage = '';
+                          if (widget.poll['expire'] != null) {
+                            DateTime expireDate =
+                                DateTime.parse(widget.poll['expire']);
+                            if (expireDate.isBefore(DateTime.now())) {
+                              _isExpired = true;
+                              expireMessage = 'Poll has expired';
+                            }
+                          }
                           return Padding(
-                          
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 8.0),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                submitAnswer(option['id'].toString());
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    chosenOptionId == option['id'].toString()
-                                        ? Colors.green
-                                        : null,
-                              ),
-                              child: Text(option['title']),
-                            ),
-                          );
+                              padding: const EdgeInsets.all(2.0),
+                              child: ListTile(
+                                title: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _isExpired ? expireMessage : '',
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    Text(
+                                        '${option['title']}   -   ${option['percent']}%',
+                                        style: const TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15)),
+                                    const SizedBox(height: 10.0)
+                                  ],
+                                ),
+                                subtitle: ElevatedButton(
+                                  onPressed: () {
+                                    submitAnswer(
+                                        option['id'].toString());
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: chosenOptionId ==
+                                                option['id'].toString()
+                                            ? Colors.green
+                                            : Colors.blue,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0)),
+                                      backgroundColor: Colors.white),
+                                  child: Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            option['title'],
+                                            style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 18),
+                                          )
+                                        ],
+                                      )),
+                                ),
+                              ));
                         },
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

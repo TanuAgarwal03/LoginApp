@@ -110,7 +110,7 @@ class _MainPageState extends State<MainPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const PollListPage(token: 'token')), 
+                  MaterialPageRoute(builder: (context) => PollListPage(token: 'token', poll: {},)), 
                 );
               },
             ),

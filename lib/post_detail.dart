@@ -1,4 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -25,20 +28,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
   int userId = 0;
   String htmlcode = '';
   String postTitle = '';
+  String imageUrl = '';
 
   Map<int, String> _categoryMap = {};
   Map<int, String> _tagMap = {};
   Map<int, String> _author = {};
   List<dynamic> _comments = [];
   final TextEditingController _commentController = TextEditingController();
-  Map<int, TextEditingController> _replyControllers = {};
+  // Map<int, TextEditingController> _replyControllers = {};
 
-  Map<int , bool> _expandedComments = {};
+  // Map<int , bool> _expandedComments = {};
   int? parentId;
-  // int? _replyingToCommentId;
-  // int? parentCommentId;
+  bool _isReplyMode = false;
   
-
   @override
   void initState() {
     super.initState();
@@ -57,8 +59,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     email = prefs.getString('email') ?? '';
     mobile = prefs.getInt('mobile') ?? 0;
     userId = prefs.getInt('id') ?? 0;
-
-    
+    imageUrl = prefs.getString('image') ?? '';
   }
 
   Future<void> _fetchPostDetail() async {
@@ -224,6 +225,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     if (parentId != null) {
       requestBody['parent'] = parentId;
+      _isReplyMode = true;
     }
 
     try {
@@ -239,8 +241,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
       if (response.statusCode == 201) {
         _fetchComments();
         _commentController.clear();
+        parentId = null;
         setState(() {
           _isLoading = false;
+          _isReplyMode= false;
         });
       } else {
         setState(() {
@@ -305,7 +309,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 15),
 
                       Padding(
                         padding: const EdgeInsets.all(20.0),
@@ -319,7 +323,214 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           fit: BoxFit.cover,
                         ),
                       ),
+                      
+                      const SizedBox(height: 10),
 
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(                            
+                              backgroundColor: Colors.blue,
+                              minimumSize: const Size(10.0, 40.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6.0),
+                              )),
+                          onPressed: () {
+                            showModalBottomSheet(
+                                backgroundColor: Colors.grey.shade100,
+                                showDragHandle: true,
+                                enableDrag: true,
+                                context: context,
+                                builder: (context) {
+                                  return StatefulBuilder(
+                                    builder: (BuildContext builder , setState) {
+                                      return Container(
+                                      height:MediaQuery.of(context).size.height *0.8,
+                                      width: MediaQuery.of(context).size.width,
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(0.0),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  _comments.isNotEmpty
+                                                      ? Column(
+                                                          children: _comments.map((comment) {
+                                                            bool showAllReplies = false;
+                                                            return StatefulBuilder(
+                                                              builder: (context, replyState) {
+                                                                return Column(
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  mainAxisAlignment: MainAxisAlignment.start,
+                                                                  children: [
+                                                                    Column(
+                                                                      children: [
+                                                                        Row(
+                                                                          children: [
+                                                                            ClipOval(child: Image.network(imageUrl , height: 30, width: 30)),
+                                                                            const SizedBox(width: 8.0),
+                                                                            Column(
+                                                                              mainAxisAlignment: MainAxisAlignment.start,
+                                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                                              children: [
+                                                                                Text('${comment['users']['username']}',
+                                                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                ),
+                                                                                Text(comment['content'],style: const TextStyle(fontSize: 16, color: Colors.black)),
+                                                                                TextButton(
+                                                                                  onPressed: () {
+                                                                                    replyState((){
+                                                                                      parentId = comment['id'];
+                                                                                      _isReplyMode = true;
+                                                                                    });
+                                                                                    print(parentId);
+                                                                                  }, 
+                                                                                  child: 
+                                                                                  Text('Reply',style: TextStyle(color: Colors.grey[600],fontWeight: FontWeight.bold,fontSize: 12)),
+                                                                                ),
+                                                                              ],
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                        Column(
+                                                                            children: comment['replies'].take(showAllReplies ? comment['replies'].length : 1).map<Widget>((reply) {
+                                                                              return Padding(
+                                                                                padding: const EdgeInsets.only(left: 20.0),
+                                                                                child: ListTile(
+                                                                                  leading: ClipOval(child: Image.network(imageUrl, height: 30, width: 30,),),
+                                                                                  title: Text('${reply['users']['username']}',
+                                                                                    style: const TextStyle(
+                                                                                        fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                  ),
+                                                                                  subtitle: Text(reply['content'],
+                                                                                    style: const TextStyle(
+                                                                                        fontSize: 16, color: Colors.black),
+                                                                                  ),
+                                                                                ),
+                                                                              );
+                                                                            }).toList(),
+                                                                          ),
+                                                                          if (comment['replies'].length > 1)
+                                                                            TextButton(                                                                              
+                                                                              onPressed: () {
+                                                                                replyState(() {
+                                                                                  showAllReplies = !showAllReplies;
+                                                                                });
+                                                                              },
+                                                                              child:  Align(
+                                                                                alignment: Alignment.centerLeft,
+                                                                                child: Text(showAllReplies
+                                                                                    ? 'Hide'
+                                                                                    : 'Show all replies (${comment['replies'].length})',                                                                                     
+                                                                                    style: TextStyle(color: Colors.grey[700] , fontWeight: FontWeight.bold, fontSize: 14 ,),
+                                                                                    ),
+                                                                              )
+                                                                            ),
+                                                                      ],
+                                                                    ),
+                                                                    const Divider(),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          }).toList(),
+                                                        )
+                                                      : const Text('No comments yet.'),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Row(
+                                            children: [
+                                              Container(
+                                                width: MediaQuery.of(context).size.width * 0.80 ,
+                                                child: TextFormField(
+                                                controller: _commentController,
+                                                decoration: InputDecoration(                                                                                           
+                                                    filled: true,
+                                                    fillColor: Colors.white,
+                                                    hintText: parentId == null ? 'Add a new comment' : 'Reply to comment',
+                                                    suffixIcon:_isReplyMode  
+                                                     ?IconButton(
+                                                      icon: const Icon(Icons.cancel_sharp ),
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          parentId = null;
+                                                          _isReplyMode = false;
+                                                        });                                                      
+                                                        print(parentId);
+
+                                                      },
+                                                    )
+                                                    : null,
+                                                    border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(20.0)),
+                                                    focusedBorder: OutlineInputBorder(
+                                                      borderRadius: BorderRadius.circular(20.0),
+                                                      borderSide: const BorderSide(
+                                                          color: Colors.black),                                                    
+                                                    ),                                                   
+                                                ),
+                                                
+                                              ),
+                                              
+                                              ),
+                                              const SizedBox(width: 10.0),
+                                              
+                                              IconButton.filled(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10.0 , vertical: 10.0),
+                                                onPressed: () {
+                                                  _addComment(_commentController.text);
+                                                },
+                                                icon: const Icon(Icons.send))
+                                                                                             
+                                              ],
+                                            )
+                                            // child: Column(
+                                            //   children: [
+                                                // TextFormField(
+                                                //   controller: _commentController,
+                                                //   decoration: InputDecoration(
+                                                //       filled: true,
+                                                //       fillColor: Colors.white,
+                                                //       hintText: parentId == null ? 'Add a new comment' : 'Reply to comment',
+                                                //       // hintText: 'add comment',
+                                                //       border: OutlineInputBorder(
+                                                //           borderRadius: BorderRadius.circular(15.0)),
+                                                //       focusedBorder: OutlineInputBorder(
+                                                //         borderRadius: BorderRadius.circular(15.0),
+                                                //         borderSide: const BorderSide(
+                                                //             color: Colors.black),
+                                                //       ),
+                                            //           suffixIcon: IconButton(
+                                            //               onPressed: () {
+                                            //                 _addComment(_commentController.text);
+                                            //               },
+                                            //               icon: const Icon(Icons.send))),
+                                            //     ),
+                                            //   ],
+                                            // ),
+                                          ),
+                                        ],
+                                      ),
+                                  );
+
+                                    });
+                                  // return StatefulBuilder(builder: BuildContext builder , StateSetter setState){}
+                                  
+
+                                }
+                            );
+                          },
+                          child: const Text('Comment' , style: TextStyle(color: Colors.white)),                          
+                      ),
+                      const SizedBox(height: 20.0),
                       Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: HtmlWidget(
@@ -327,6 +538,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           textStyle: const TextStyle(fontSize: 16),
                         ),
                       ),
+
+                      // Image.network(imageUrl, height: 50.0, width: 50.0,),
+
                       Text(
                         'Author: ${_author[_post!['author']]}',
                         style: const TextStyle(fontSize: 16),
@@ -351,146 +565,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         'Category: ${_categoryMap[_post!['category']]}',
                         style: const TextStyle(fontSize: 16),
                       ),
-                      const SizedBox(height: 20),
-
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              minimumSize: const Size(10.0, 40.0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6.0),
-                              )),
-                          onPressed: () {
-                            showModalBottomSheet(
-                                backgroundColor: Colors.grey.shade100,
-                                showDragHandle: true,
-                                enableDrag: true,
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return Container(
-                                      height:MediaQuery.of(context).size.height *0.7,
-                                      decoration: const BoxDecoration(
-                                        borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(0.0),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              child: Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  _comments.isNotEmpty
-                                                      ? Column(
-                                                          children: _comments.map((comment) {
-                                                            bool showAllReplies = false;
-                                                            return StatefulBuilder(
-                                                              builder: (context, setState) {
-                                                                return Column(
-                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                  children: [
-                                                                    ListTile(
-                                                                      title: Text(
-                                                                        '${comment['users']['username']}',
-                                                                        style: const TextStyle(
-                                                                            fontWeight: FontWeight.bold, fontSize: 14),
-                                                                      ),
-                                                                      subtitle: Column(
-                                                                        mainAxisAlignment: MainAxisAlignment.start,
-                                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          Text(comment['content'],style: const TextStyle(fontSize: 16, color: Colors.black)),
-
-                                                                          TextButton(
-                                                                            onPressed: () {
-                                                                              parentId = comment['id'];
-                                                                            }, 
-                                                                            child: 
-                                                                            Text('Reply',style: TextStyle(color: Colors.grey[600],fontWeight: FontWeight.bold,fontSize: 12)),
-                                                                            ),
-                                                                      
-                                                                          Column(
-                                                                            children: comment['replies'].take(showAllReplies ? comment['replies'].length : 1).map<Widget>((reply) {
-                                                                              return Padding(
-                                                                                padding: const EdgeInsets.only(left: 20.0),
-                                                                                child: ListTile(
-                                                                                  title: Text('${reply['users']['username']}',
-                                                                                    style: const TextStyle(
-                                                                                        fontWeight: FontWeight.bold, fontSize: 14),
-                                                                                  ),
-                                                                                  subtitle: Text(reply['content'],
-                                                                                    style: const TextStyle(
-                                                                                        fontSize: 16, color: Colors.black),
-                                                                                  ),
-                                                                                ),
-                                                                              );
-                                                                            }).toList(),
-                                                                          ),
-                                                                          if (comment['replies'].length > 1)
-                                                                            TextButton(
-                                                                              onPressed: () {
-                                                                                setState(() {
-                                                                                  showAllReplies = !showAllReplies;
-                                                                                });
-                                                                              },
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
-                                                                                child: Text(showAllReplies
-                                                                                    ? 'Hide'
-                                                                                    : 'Show all replies (${comment['replies'].length})', 
-                                                                                    style: TextStyle(color: Colors.grey[700] , fontWeight: FontWeight.bold, fontSize: 14)
-                                                                                    ),)
-                                                                            ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                    const Divider(),
-                                                                  ],
-                                                                );
-                                                              },
-                                                            );
-                                                          }).toList(),
-                                                        )
-                                                      : const Text('No comments yet.'),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              children: [
-                                                TextFormField(
-                                                  controller: _commentController,
-                                                  decoration: InputDecoration(
-                                                      filled: true,
-                                                      fillColor: Colors.white,
-                                                      hintText: parentId == null ? 'Add a new comment' : 'Reply to comment',
-                                                      border: OutlineInputBorder(
-                                                          borderRadius: BorderRadius.circular(15.0)),
-                                                      focusedBorder: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(15.0),
-                                                        borderSide: const BorderSide(
-                                                            color: Colors.black),
-                                                      ),
-                                                      suffixIcon: IconButton(
-                                                          onPressed: () {
-                                                            _addComment(_commentController.text);
-                                                          },
-                                                          icon: const Icon(Icons.send))),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                  );
-                                }
-                            );
-                          },
-                          child: const Text('Add Comment' , style: TextStyle(color: Colors.white)),                          
-                      )
                     ],
                   ),
                 )
