@@ -19,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
   bool _passwordVisible = false;
+  String companyName = '';
 
   @override
   void initState() {
@@ -79,13 +80,17 @@ class _LoginPageState extends State<LoginPage> {
       final data = jsonDecode(response.body);
       String userId = data['id'].toString();
       String token = data['token'];
-      _saveDataLocally(data);
-
+      // fetchCompanyData();
+      // _saveDataLocally(data);
+      
       await _saveDataLocally({
         'userId': userId,
         'token': token,
         'username': username,
       });
+
+      await fetchCompanyData();
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -115,12 +120,53 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
+  Future<void> fetchCompanyData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('token') ?? '';
+
+    if (token == null) {
+    setState(() {
+      print('Token not found. Please log in again.');
+    });
+    return;
+  }
+
+    try {
+      final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/agency/company/'),
+      headers: {
+        'Authorization' : 'Token $token',
+      });
+      if (response.statusCode == 200) {
+        final companyData = json.decode(response.body)['results'][0];
+        int companyId = companyData['id'];
+        String companyName = companyData['name'];
+
+        if (companyData != null && companyData.isNotEmpty) {
+          // await _saveDataLocally(companyData['id']);
+
+          await _saveDataLocally({
+            'companyname' : companyName,
+            'companyId' : companyId,
+          });
+
+          // setState(() {
+          //   _saveDataLocally(companyData);
+          // }
+          // );
+        }
+      } else {
+        throw Exception('Failed to load company data');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        padding: EdgeInsets.all(30.0),
+        padding: const EdgeInsets.all(30.0),
         width: MediaQuery.of(context).size.width*1,
         height: MediaQuery.of(context).size.height*1,
 
@@ -147,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _usernameController,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 228, 226, 226),
+                  fillColor: const Color.fromARGB(255, 228, 226, 226),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -173,7 +219,7 @@ class _LoginPageState extends State<LoginPage> {
                 obscureText: !_passwordVisible,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 228, 226, 226),
+                  fillColor: const Color.fromARGB(255, 228, 226, 226),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -223,12 +269,13 @@ class _LoginPageState extends State<LoginPage> {
                     child: FloatingActionButton.small(
                       onPressed: () {
                         _login();
+                        // fetchCompanyData();
                       },
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                             100.0), // Ensures the button is circular
                       ),
-                      backgroundColor: Color.fromARGB(255, 114, 112, 112),
+                      backgroundColor: const Color.fromARGB(255, 114, 112, 112),
                       child: const Icon(Icons.arrow_forward_rounded),
                     ),
                   ),

@@ -25,7 +25,6 @@ class _MyAppState extends State<MyApp> {
     return const MaterialApp(
       debugShowCheckedModeBanner: false, 
       home: LoginPage(),
-      // home: ResetPasswordPage(),
     );
   }
 }
@@ -145,25 +144,6 @@ class _MainPageState extends State<MainPage> {
           ],
         ),
       ),
-      // body: Center(
-      //   child: _widgetOptions.elementAt(_selectedIndex),
-      // ),
-      // bottomNavigationBar: BottomNavigationBar(
-      //   items: const <BottomNavigationBarItem>[
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.home),
-      //       label: 'Blogs',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.logout),
-      //       label: 'Logout',
-      //     ),
-      //   ],
-      //   currentIndex: _selectedIndex,
-      //   selectedItemColor: Colors.amber[800],
-      //   backgroundColor: Colors.lightBlue[50],
-      //   onTap: _onItemTapped,
-      // ),
       body: Padding(
         padding: const EdgeInsets.only(top: 10.0), // Adjust the top padding as needed
         child: Center(

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:login_page/newPoll.dart';
+
+
 class PollDetailPage extends StatefulWidget {
   const PollDetailPage({super.key, required this.token, required this.userId, required this.poll});
   final String token;
@@ -226,17 +229,17 @@ class _PollDetailPageState extends State<PollDetailPage> {
                     if (_canVote)
                       ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: pollOptions.length,
                         itemBuilder: (context, index) {
                           final option = pollOptions[index];
-                          bool _isExpired = false;
+                          bool isExpired = false;
                           String expireMessage = '';
                           if (widget.poll['expire'] != null) {
                             DateTime expireDate =
                                 DateTime.parse(widget.poll['expire']);
                             if (expireDate.isBefore(DateTime.now())) {
-                              _isExpired = true;
+                              isExpired = true;
                               expireMessage = 'Poll has expired';
                             }
                           }
@@ -248,7 +251,7 @@ class _PollDetailPageState extends State<PollDetailPage> {
                                       CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _isExpired ? expireMessage : '',
+                                      isExpired ? expireMessage : '',
                                       style: const TextStyle(
                                         color: Colors.red,
                                       ),

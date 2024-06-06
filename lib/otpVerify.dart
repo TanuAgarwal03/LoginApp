@@ -33,7 +33,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
     if (response.statusCode == 201) {
       print('OTP verification successful');
-      // Navigate to the next page or show success message
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
