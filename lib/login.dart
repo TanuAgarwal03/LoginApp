@@ -48,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
     List<Future> futures = [];
     data.forEach((key, value) async {
       if (value is String) {
-        await prefs.setString(key, value.trim());
+        await prefs.setString(key, value);
       } else if (value is int) {
         await prefs.setInt(key, value);
       } else if (value is bool) {
@@ -81,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
       String userId = data['id'].toString();
       String token = data['token'];
       // fetchCompanyData();
-      // _saveDataLocally(data);
+      _saveDataLocally(data);
       
       await _saveDataLocally({
         'userId': userId,
@@ -138,21 +138,14 @@ class _LoginPageState extends State<LoginPage> {
       });
       if (response.statusCode == 200) {
         final companyData = json.decode(response.body)['results'][0];
-        int companyId = companyData['id'];
+        String companyId = companyData['id'].toString();
         String companyName = companyData['name'];
 
         if (companyData != null && companyData.isNotEmpty) {
-          // await _saveDataLocally(companyData['id']);
-
           await _saveDataLocally({
             'companyname' : companyName,
             'companyId' : companyId,
           });
-
-          // setState(() {
-          //   _saveDataLocally(companyData);
-          // }
-          // );
         }
       } else {
         throw Exception('Failed to load company data');

@@ -256,6 +256,15 @@ class _PollDetailPageState extends State<PollDetailPage> {
                                         color: Colors.red,
                                       ),
                                     ),
+                                    option['image'] != null
+                                            ? Image.network(
+                                                option['image'],
+                                                height: 80,
+                                                width: 150,
+                                              )
+                                            : Container(
+                                                width: 200,
+                                              ),
                                     Text(
                                         '${option['title']}   -   ${option['percent']}%',
                                         style: const TextStyle(

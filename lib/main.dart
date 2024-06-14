@@ -61,7 +61,12 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // await prefs.clear();
+    prefs.remove('userId');
+    prefs.remove('token');
+    prefs.remove('companyname');
+    prefs.remove('user');
+    prefs.remove('companyId');
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),

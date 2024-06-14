@@ -92,6 +92,9 @@ class _UserDetailPageState extends State<UserDetailPage> {
                         height: 100,
                         width: 100,
                         fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
+                          return const Icon(Icons.account_circle_rounded);
+                        },
                       ),
                     ),
                   ),

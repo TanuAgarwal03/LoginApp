@@ -305,12 +305,18 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
                                     height: 100,
                                     width: 100,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
+                                      return const Icon(Icons.person_4_rounded ); 
+                                    }
                                   )
                                 : Image.network(
                                     '$profile',
                                     height: 100,
                                     width: 100,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
+                                      return const Icon(Icons.person_4_rounded ); 
+                                    }
                                   ),
                           ),
                         ),
