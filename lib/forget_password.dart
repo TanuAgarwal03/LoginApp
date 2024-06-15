@@ -18,7 +18,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
     String username = _usernameController.text.trim();
 
     final response = await http.post(
-      Uri.parse('https://test.securitytroops.in/stapi/v1/forgot-password/'),
+      Uri.parse('https://test.securitytroops.in/stapi/v1/otp-send/'),
       body: {'username': username},
     );
 

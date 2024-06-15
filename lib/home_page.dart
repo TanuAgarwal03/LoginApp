@@ -4,6 +4,7 @@
 // import 'dart:convert';
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:intl/intl.dart';
+// // import 'package:translator/translator.dart';
 
 // class BlogPostsPage extends StatefulWidget {
 //   const BlogPostsPage({super.key});
@@ -13,6 +14,9 @@
 // }
 
 // class _BlogPostsPageState extends State<BlogPostsPage> {
+
+//   // GoogleTranslator translator = GoogleTranslator();
+
 //   List<dynamic> _posts = [];
 //   bool _isLoading = false;
 //   bool _hasError = false;
@@ -52,6 +56,15 @@
 //     }
 //   }
 
+//   // void translate() {
+//   //   translator.translate(sourceText);
+//   // }
+
+//   String formatTimestamp(String timestamp) {
+//     DateTime dateTime = DateTime.parse(timestamp);
+//     return DateFormat('MMM dd, yyyy ').format(dateTime);
+//   }
+
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
@@ -67,7 +80,15 @@
 //                     final post = _posts[index];
 
 //                     String postTitle = post['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
-//                     String postTime = post['timestamp'];
+//                     String postTime = formatTimestamp(post['timestamp']);
+
+//                     // translate() {
+//                     //   translator.translate(postTitle , to: "hi").then((output) {
+//                     //     setState(() {
+//                     //       postTitle = output as String;
+//                     //     });
+//                     //   });
+//                     // }
 
 //                     return Padding(
 //                         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -105,6 +126,7 @@
 //                                       width: double.infinity,
 //                                       fit: BoxFit.cover,
 //                                     ),
+
 //                                   Container(
 //                                     padding: const EdgeInsets.fromLTRB(
 //                                         12, 10, 12, 0),
@@ -122,7 +144,7 @@
 //                                         ),
 //                                         const Divider(),
 //                                         Text(
-//                                          'Post created at- $postTime',
+//                                          '$postTime',
 //                                           textAlign: TextAlign.right,
 //                                           style: TextStyle(
 //                                             fontSize: 14,
@@ -133,6 +155,9 @@
 //                                     ),
 //                                   ),
 //                                   Container(height: 10),
+//                                   // ElevatedButton(
+//                                   //     onPressed: translate(),
+//                                   //     child: Text('Translate')),
 //                                 ],
 //                               ),
 //                             )
@@ -150,6 +175,7 @@ import 'package:login_page/post_detail.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:translator/translator.dart';
 
 class BlogPostsPage extends StatefulWidget {
   const BlogPostsPage({super.key});
@@ -159,6 +185,8 @@ class BlogPostsPage extends StatefulWidget {
 }
 
 class _BlogPostsPageState extends State<BlogPostsPage> {
+  GoogleTranslator translator = GoogleTranslator();
+
   List<dynamic> _posts = [];
   bool _isLoading = false;
   bool _hasError = false;
@@ -203,6 +231,18 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     return DateFormat('MMM dd, yyyy ').format(dateTime);
   }
 
+
+
+  String text = "Hello , How are you ?";
+
+  // void translate() {
+  //   translator.translate(text, to: "hi").then((output) {
+  //     setState(() {
+  //       text = output.toString();
+  //     });
+  //   });
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,12 +257,19 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                   itemBuilder: (context, index) {
                     final post = _posts[index];
 
-                    String postTitle = post['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
+                    String postTitle =post['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
                     String postTime = formatTimestamp(post['timestamp']);
 
+                    // translator.translate(postTitle , to: "hi").then((result) => print("Source: $postTitle \n Translated : $result"));
+
                     return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Card.outlined(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        children: [
+                          // Text(text),
+                          // ElevatedButton(
+                          //     onPressed: translate, child: Text('Translate')),
+                          Card(
                             elevation: 10,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),
@@ -265,6 +312,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                                       children: <Widget>[
                                         Text(
                                           postTitle,
+                                          // translator.translate(postTitle , to: "hi").then((result) => print("Source: $postTitle \n Translated : $result")).toString(),
                                           style: const TextStyle(
                                             fontSize: 18,
                                             color: Colors.black,
@@ -273,7 +321,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                                         ),
                                         const Divider(),
                                         Text(
-                                         '$postTime',
+                                          postTime,
                                           textAlign: TextAlign.right,
                                           style: TextStyle(
                                             fontSize: 14,
@@ -284,13 +332,31 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                                     ),
                                   ),
                                   Container(height: 10),
+                                  
                                 ],
                               ),
-                            )
-                          )
-                        );
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
     );
   }
 }
+
+
+  // Future<void> _translateTitle(int index) async {
+  //   final translatedText = await translator.translate(
+  //     _posts[index]['title'],
+  //     to: 'hi',
+  //   );
+  //   setState(() {
+  //     _posts[index]['title'] = translatedText.text;
+  //   });
+  // }
+  // ElevatedButton(
+  //                                   onPressed: () => _translateTitle(index),
+  //                                   child: const Text('Translate to Hindi'),
+  //                                 ),

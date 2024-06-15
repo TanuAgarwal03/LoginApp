@@ -62,7 +62,7 @@ class _PollListPageState extends State<PollListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PollCreatorPage(token: 'token'),
+        builder: (context) => const PollCreatorPage(token: 'token'),
       ),
     );
   }
@@ -71,32 +71,32 @@ class _PollListPageState extends State<PollListPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Polls',
-            style: TextStyle(color: Colors.white),
-            textAlign: TextAlign.center,
-          ),
-          backgroundColor: Colors.blue,
-          iconTheme: const IconThemeData(
-            color: Colors.white,
-          ),
-        ),
+        // appBar: AppBar(
+        //   title: const Text(
+        //     'Polls',
+        //     style: TextStyle(color: Colors.white),
+        //     textAlign: TextAlign.center,
+        //   ),
+        //   backgroundColor: Colors.blue,
+        //   iconTheme: const IconThemeData(
+        //     color: Colors.white,
+        //   ),
+        // ),
         body: const Center(child: CircularProgressIndicator()),
       );
     } else {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Polls',
-            style: TextStyle(color: Colors.white),
-            textAlign: TextAlign.center,
-          ),
-          backgroundColor: Colors.blue,
-          iconTheme: const IconThemeData(
-            color: Colors.white,
-          ),
-        ),
+        // appBar: AppBar(
+        //   title: const Text(
+        //     'Polls',
+        //     style: TextStyle(color: Colors.white),
+        //     textAlign: TextAlign.center,
+        //   ),
+        //   backgroundColor: Colors.blue,
+        //   iconTheme: const IconThemeData(
+        //     color: Colors.white,
+        //   ),
+        // ),
         body: Container(
           color: Colors.white,
           child: Column(

@@ -57,11 +57,11 @@ class _UserDetailPageState extends State<UserDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Details'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('User Details'),
+      // ),
       body:  _isLoading
-          ? const CircularProgressIndicator()
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
             child: _buildUserDetailPage(context),
           ),
@@ -77,9 +77,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
           Container(
             alignment: Alignment.center,
             margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1),
-            child: Column(
-              
-
+            child: Column(             
               children: [
                 const SizedBox(height: 20.0),
                 if (userdata['image'] != null && userdata['image'].isNotEmpty)

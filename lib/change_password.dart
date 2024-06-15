@@ -177,7 +177,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       Uri.parse('https://test.securitytroops.in/stapi/v1/change-password/'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Token $token', // Replace 'Token' with your actual authentication scheme
+        'Authorization': 'Token $token', 
       },
       body: jsonEncode({
         'old_password': oldPassword,
@@ -207,9 +207,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Change Password'),
-      ),
       body: Container(
         padding: const EdgeInsets.all(20.0),
         child: Form(

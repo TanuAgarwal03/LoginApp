@@ -279,7 +279,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://test.securitytroops.in/stapi/v1/new-password/'),
+        Uri.parse('https://test.securitytroops.in/stapi/v1/forgot-password/'),
         body: {
           'username': username,
           'otp': otp,
