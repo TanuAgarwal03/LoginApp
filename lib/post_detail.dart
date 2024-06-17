@@ -170,52 +170,73 @@ class _PostDetailPageState extends State<PostDetailPage> {
     return tagTitles.join(', ');
   }
 
-  Future<void> _fetchComments() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token') ?? '';
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
-        headers: {
-          'Authorization': 'Token $token',
-        },
-      );
+Future<void> _fetchComments() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  token = prefs.getString('token') ?? '';
+  setState(() {
+    _isLoading = true;
+    _hasError = false;
+  });
 
-      if (response.statusCode == 200) {
-        setState(() {
-          _comments = json.decode(response.body)['comments'];
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
-        print('Failed to load comments: ${response.statusCode}');
+  try {
+    final response = await http.get(
+      Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/${widget.slug}/'),
+      headers: {
+        'Authorization': 'Token $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> comments = json.decode(response.body)['comments'];
+
+      if (isTranslated) {
+        final translator = GoogleTranslator();
+        for (var comment in comments) {
+          var translatedComment = await translator.translate(comment['content'], to: 'hi');
+          comment['content'] = translatedComment.text;
+
+          for (var reply in comment['replies']) {
+            var translatedReply = await translator.translate(reply['content'], to: 'hi');
+            reply['content'] = translatedReply.text;
+          }
+        }
       }
-    } catch (e) {
+
+      setState(() {
+        _comments = comments;
+        _isLoading = false;
+      });
+    } else {
       setState(() {
         _isLoading = false;
         _hasError = true;
       });
-      print('Error loading comments: $e');
+      print('Failed to load comments: ${response.statusCode}');
     }
-  }
-
-  Future<void> _addComment(String comment) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token') ?? '';
-    int postId = _post!['id'];
-
+  } catch (e) {
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
+      _hasError = true;
     });
+    print('Error loading comments: $e');
+  }
+}
+
+Future<void> _addComment(String comment) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  token = prefs.getString('token') ?? '';
+  int postId = _post!['id'];
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    if (isTranslated) {
+      var translatedComment = await translator.translate(comment, to: 'hi');
+      comment = translatedComment.text;
+    }
 
     Map<String, dynamic> requestBody = {
       'post': postId,
@@ -231,37 +252,37 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _isReplyMode = true;
     }
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/comment/'),
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
+    final response = await http.post(
+      Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/comment/'),
+      headers: {
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(requestBody),
+    );
 
-      if (response.statusCode == 201) {
-        _fetchComments();
-        _commentController.clear();
-        parentId = null;
-        setState(() {
-          _isLoading = false;
-          _isReplyMode = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        print('Failed to add comment: ${response.statusCode}');
-      }
-    } catch (e) {
+    if (response.statusCode == 201) {
+      _fetchComments();
+      _commentController.clear();
+      parentId = null;
+      setState(() {
+        _isLoading = false;
+        _isReplyMode = false;
+      });
+    } else {
       setState(() {
         _isLoading = false;
       });
-      print('Error adding comment: $e');
+      print('Failed to add comment: ${response.statusCode}');
     }
+  } catch (e) {
+    setState(() {
+      _isLoading = false;
+    });
+    print('Error adding comment: $e');
   }
+}
+
 
   String _formatDate(String dateString) {
     final dateTime = DateTime.parse(dateString);
@@ -330,6 +351,27 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  void _reverseTranslation() {
+    setState(() {
+      isTranslated = false;
+    });
+  }
+
+  void _selectLanguage(String language) {
+    if (language == 'English') {
+      setState(() {
+        _reverseTranslation();
+        isTranslated==false;
+      });
+      
+    } else if (language == 'Hindi') {
+      setState(() {
+         _translateData();
+          isTranslated == true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -340,15 +382,37 @@ class _PostDetailPageState extends State<PostDetailPage> {
             iconTheme: const IconThemeData(
               color: Colors.white,
             ),
-            actions: <Widget>[
-              IconButton(
-                icon: const Icon(Icons.language_outlined),
-                tooltip: 'Change Language',
-                onPressed: () {
-                  _translateData();
-                },
+            actions:<Widget>[
+          PopupMenuButton<String>(
+            onSelected: (String result) {
+              _selectLanguage(result);
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: '',
+                enabled: false,
+                child: Text(
+                  'Select Language',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'English',
+                child: Text('English'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Hindi',
+                child: Text('Hindi'),
               ),
             ],
+            icon: const Icon(Icons.language_outlined),
+            tooltip: 'Change Language',
+          ),
+        ],
             backgroundColor: Colors.blue),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -361,14 +425,36 @@ class _PostDetailPageState extends State<PostDetailPage> {
             color: Colors.white,
           ),
           actions: <Widget>[
-              IconButton(
-                icon: const Icon(Icons.language_outlined),
-                tooltip: 'Change Language',
-                onPressed: () {
-                  _translateData();
-                },
+          PopupMenuButton<String>(
+            onSelected: (String result) {
+              _selectLanguage(result);
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: '',
+                enabled: false,
+                child: Text(
+                  'Select Language',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'English',
+                child: Text('English'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Hindi',
+                child: Text('Hindi'),
               ),
             ],
+            icon: const Icon(Icons.language_outlined),
+            tooltip: 'Change Language',
+          ),
+        ],
           backgroundColor: Colors.blue,
         ),
         body: const Center(child: Text('Failed to load post details')),
@@ -382,14 +468,36 @@ class _PostDetailPageState extends State<PostDetailPage> {
             color: Colors.white,
           ),
           actions: <Widget>[
-              IconButton(
-                icon: const Icon(Icons.language_outlined),
-                tooltip: 'Change Language',
-                onPressed: () {
-                  _translateData();
-                },
+          PopupMenuButton<String>(
+            onSelected: (String result) {
+              _selectLanguage(result);
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: '',
+                enabled: false,
+                child: Text(
+                  'Select Language',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'English',
+                child: Text('English'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Hindi',
+                child: Text('Hindi'),
               ),
             ],
+            icon: const Icon(Icons.language_outlined),
+            tooltip: 'Change Language',
+          ),
+        ],
           backgroundColor: Colors.blue,
         ),
         body: SingleChildScrollView(
@@ -486,30 +594,36 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                               },
                                                                             )),
                                                                             const SizedBox(width: 8.0),
-                                                                            Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.start,
-                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                              children: [
-                                                                                Text(
-                                                                                  comment['users']['username'],
-                                                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                                                                ),
-                                                                                Text(comment['content'], style: const TextStyle(fontSize: 16, color: Colors.black)),
-                                                                                TextButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      parentId = comment['id'];
-                                                                                      _isReplyMode = true;
-                                                                                    });
-                                                                                    print(parentId);
-                                                                                  },
-                                                                                  child: Text( isTranslated 
-                                                                                    ?translatedReplyTextButton
-                                                                                    : 'Reply',
-                                                                                    style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
-                                                                                ),
-                                                                              ],
-                                                                            )
+                                                                            Flexible(
+                                                                            child :Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  Text(
+                                                                                    comment['users']['username'],
+                                                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                  ),
+                                                                                  Text(comment['content'], style: const TextStyle(fontSize: 16, color: Colors.black),
+                                                                                      overflow: TextOverflow.ellipsis ,
+                                                                                      maxLines:4
+                                                                                    ),                                                                                  
+                                                                                
+                                                                                  TextButton(
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        parentId = comment['id'];
+                                                                                        _isReplyMode = true;
+                                                                                      });
+                                                                                      print(parentId);
+                                                                                    },
+                                                                                    child: Text( isTranslated 
+                                                                                      ?translatedReplyTextButton
+                                                                                      : 'Reply',
+                                                                                      style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
+                                                                                  ),
+                                                                                ],
+                                                                              ),   
+                                                                            )                                                                       
                                                                           ],
                                                                         ),
                                                                         Column(
@@ -540,8 +654,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                             );
                                                                           }).toList(),
                                                                         ),
-                                                                        if (comment['replies'].length >
-                                                                            1)
+                                                                        if (comment['replies'].length >1)
                                                                           TextButton(
                                                                               onPressed: () {
                                                                                 replyState(() {
@@ -600,29 +713,34 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                               },
                                                                             )),
                                                                             const SizedBox(width: 8.0),
-                                                                            Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.start,
-                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                              children: [
-                                                                                Text(
-                                                                                  comment['users']['username'],
-                                                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                                                                ),
-                                                                                Text(comment['content'], style: const TextStyle(fontSize: 16, color: Colors.black)),
-                                                                                TextButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      parentId = comment['id'];
-                                                                                      _isReplyMode = true;
-                                                                                    });
-                                                                                    print(parentId);
-                                                                                  },
-                                                                                  child: Text( isTranslated 
-                                                                                    ?translatedReplyTextButton
-                                                                                    : 'Reply',
-                                                                                    style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
-                                                                                ),
-                                                                              ],
+                                                                            Flexible(
+                                                                              child: Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  Text(
+                                                                                    comment['users']['username'],
+                                                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                  ),
+                                                                                  Text(comment['content'], style: const TextStyle(fontSize: 16, color: Colors.black),
+                                                                                        overflow: TextOverflow.ellipsis ,
+                                                                                        maxLines:4
+                                                                                      ),
+                                                                                  TextButton(
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        parentId = comment['id'];
+                                                                                        _isReplyMode = true;
+                                                                                      });
+                                                                                      print(parentId);
+                                                                                    },
+                                                                                    child: Text( isTranslated 
+                                                                                      ?translatedReplyTextButton
+                                                                                      : 'Reply',
+                                                                                      style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
                                                                             )
                                                                           ],
                                                                         ),
