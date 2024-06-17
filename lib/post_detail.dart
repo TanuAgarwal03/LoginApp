@@ -31,6 +31,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String htmlcode = '';
   String postTitle = '';
   String imageUrl = '';
+  Map<int, String> _categoryMap = {};
+  Map<int, String> _tagMap = {};
+  List<dynamic> _comments = [];
+  final TextEditingController _commentController = TextEditingController();
+  int? parentId;
+  bool _isReplyMode = false;
   String translatedPostTitle = '';
   String parsedData = '';
   String translatedPostContent = '';
@@ -41,13 +47,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String translatedCategory = '';
   String text = 'Comment';
   String translatedButton = '';
-
-  Map<int, String> _categoryMap = {};
-  Map<int, String> _tagMap = {};
-  List<dynamic> _comments = [];
-  final TextEditingController _commentController = TextEditingController();
-  int? parentId;
-  bool _isReplyMode = false;
+  String translatedReplyTextButton = '';
+  String translatedHideReplies = '';
+  String translatedShowReplies = '';
+  String translatedNewComment = '';
+  String translatedReplyComment = '';
+  List<Map<String, dynamic>> translatedCommentsList = [];
+  bool isTranslated = false;
 
   @override
   void initState() {
@@ -90,7 +96,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         dom.Document document = htmlParser.parse(_post!['content']);
         parsedData = parseDocument(document);
         setState(() {
-          _translateData();
+          // _translateData();
           _isLoading = false;
         });
       } else {
@@ -262,21 +268,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
     return DateFormat('MMM dd, yyyy').format(dateTime);
   }
 
-
-  // Future<Object> _translate(String data) async {
-  //   try {
-  //     var dataTranslate = await translator.translate(data, to: 'hi');
-  //     return dataTranslate;
-  //     // return data;
-  //     // setState(() {
-  //     //   String translatedData = dataTranslate.text;
-  //     // });
-  //   } catch (e) {
-  //     print("Error translating data: $e");
-  //     return data;
-  //   }
-  // }
-
     Future<void> _translateData() async {
     try {
       var titleTranslate = await translator.translate(postTitle, to: 'hi');
@@ -287,8 +278,37 @@ class _PostDetailPageState extends State<PostDetailPage> {
       var tagsTranslate = await translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi');
       var categoryTranslate = await translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi');
       var commentButton = await translator.translate(text , to: 'hi');
+      var replyTextButton = await translator.translate('Reply', to: 'hi');
+      var hideReplies = await translator.translate('Hide', to: 'hi');
+      var showReplies = await translator.translate('Show all replies' , to: 'hi');
+      var newComment = await translator.translate('Add a new comment' , to: 'hi');
+      var replyComment = await translator.translate('Reply to comment' , to: 'hi');
+
+      List<Map<String, dynamic>> translatedComments = [];
+      for (var comment in _comments) {
+        var translatedUsername = await translator.translate(comment['users']['username'], to: 'hi');
+        var translatedContent = await translator.translate(comment['content'], to: 'hi');
+
+        List<Map<String, dynamic>> translatedReplies = [];
+        for (var reply in comment['replies']) {
+          var translatedReplyUsername = await translator.translate(reply['users']['username'], to: 'hi');
+          var translatedReplyContent = await translator.translate(reply['content'], to: 'hi');
+          translatedReplies.add({
+            'users': {'username': translatedReplyUsername.text},
+            'content': translatedReplyContent.text,
+          });
+        }
+
+        translatedComments.add({
+          'id' : comment['id'],
+          'users': {'username': translatedUsername.text},
+          'content': translatedContent.text,
+          'replies': translatedReplies,
+        });
+      }
 
       setState(() {
+        isTranslated = true;
         translatedPostTitle = titleTranslate.text;
         translatedPostContent = contentTranslate.text;
         translatedPostAuthor = authorTranslate.text;
@@ -297,6 +317,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
         translatedTags = tagsTranslate.text;
         translatedCategory = categoryTranslate.text;
         translatedButton = commentButton.text;
+        translatedCommentsList = translatedComments;
+        translatedReplyTextButton = replyTextButton.text;
+        translatedHideReplies = hideReplies.text;
+        translatedShowReplies = showReplies.text;
+        translatedNewComment = newComment.text;
+        translatedReplyComment = replyComment.text;
+
       });
     } catch (e) {
       print('Error translating title: $e');
@@ -313,15 +340,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
             iconTheme: const IconThemeData(
               color: Colors.white,
             ),
-            // actions: <Widget>[
-            //   IconButton(
-            //     icon: const Icon(Icons.language_outlined),
-            //     tooltip: 'Change Language',
-            //     onPressed: () {
-            //       _translateData();
-            //     },
-            //   ),
-            // ],
+            actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.language_outlined),
+                tooltip: 'Change Language',
+                onPressed: () {
+                  _translateData();
+                },
+              ),
+            ],
             backgroundColor: Colors.blue),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -333,15 +360,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
           iconTheme: const IconThemeData(
             color: Colors.white,
           ),
-          // actions: <Widget>[
-          //     IconButton(
-          //       icon: const Icon(Icons.language_outlined),
-          //       tooltip: 'Change Language',
-          //       onPressed: () {
-          //         _translateData();
-          //       },
-          //     ),
-          //   ],
+          actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.language_outlined),
+                tooltip: 'Change Language',
+                onPressed: () {
+                  _translateData();
+                },
+              ),
+            ],
           backgroundColor: Colors.blue,
         ),
         body: const Center(child: Text('Failed to load post details')),
@@ -354,15 +381,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
           iconTheme: const IconThemeData(
             color: Colors.white,
           ),
-          // actions: <Widget>[
-          //     IconButton(
-          //       icon: const Icon(Icons.language_outlined),
-          //       tooltip: 'Change Language',
-          //       onPressed: () {
-          //         _translateData();
-          //       },
-          //     ),
-          //   ],
+          actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.language_outlined),
+                tooltip: 'Change Language',
+                onPressed: () {
+                  _translateData();
+                },
+              ),
+            ],
           backgroundColor: Colors.blue,
         ),
         body: SingleChildScrollView(
@@ -373,7 +400,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        translatedPostTitle,
+                        isTranslated ? translatedPostTitle : postTitle,
+                        // translatedPostTitle,
                         // postTitle,
                         style: const TextStyle(
                           fontSize: 30,
@@ -406,6 +434,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                               )),
                           onPressed: () {
                             showModalBottomSheet(
+
                                 backgroundColor: Colors.grey.shade100,
                                 showDragHandle: true,
                                 enableDrag: true,
@@ -432,7 +461,122 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
                                                 children: [
-                                                  _comments.isNotEmpty
+                                                  isTranslated
+                                                  ? translatedCommentsList.isNotEmpty
+                                                      ? Column(
+                                                          children: translatedCommentsList.map((comment) {
+                                                            bool showAllReplies =false;
+                                                            return StatefulBuilder(
+                                                              builder: (context,replyState) {
+                                                                return Column(
+                                                                  crossAxisAlignment:CrossAxisAlignment.start,
+                                                                  mainAxisAlignment:MainAxisAlignment.start,
+                                                                  children: [
+                                                                    Column(
+                                                                      children: [
+                                                                        Row(
+                                                                          children: [
+                                                                            ClipOval(
+                                                                                child: Image.network(
+                                                                              imageUrl,
+                                                                              height: 30,
+                                                                              width: 30,
+                                                                              errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                                                                return const Icon(Icons.account_circle_rounded);
+                                                                              },
+                                                                            )),
+                                                                            const SizedBox(width: 8.0),
+                                                                            Column(
+                                                                              mainAxisAlignment: MainAxisAlignment.start,
+                                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                                              children: [
+                                                                                Text(
+                                                                                  comment['users']['username'],
+                                                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                ),
+                                                                                Text(comment['content'], style: const TextStyle(fontSize: 16, color: Colors.black)),
+                                                                                TextButton(
+                                                                                  onPressed: () {
+                                                                                    setState(() {
+                                                                                      parentId = comment['id'];
+                                                                                      _isReplyMode = true;
+                                                                                    });
+                                                                                    print(parentId);
+                                                                                  },
+                                                                                  child: Text( isTranslated 
+                                                                                    ?translatedReplyTextButton
+                                                                                    : 'Reply',
+                                                                                    style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
+                                                                                ),
+                                                                              ],
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                        Column(
+                                                                          children: comment['replies'].take(showAllReplies ? comment['replies'].length : 1).map<Widget>((reply) {
+
+                                                                            return Padding(
+                                                                              padding: const EdgeInsets.only(left: 20.0),
+                                                                              child: ListTile(
+                                                                                leading: ClipOval(
+                                                                                  child: Image.network(
+                                                                                    imageUrl,
+                                                                                    height: 30,
+                                                                                    width: 30,
+                                                                                    errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                                                                      return const Icon(Icons.account_circle_rounded);
+                                                                                    },
+                                                                                  ),
+                                                                                ),
+                                                                                title: Text(
+                                                                                  '${reply['users']['username']}',
+                                                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                                                ),
+                                                                                subtitle: Text(
+                                                                                  reply['content'],
+                                                                                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                                                                                ),
+                                                                              ),
+                                                                            );
+                                                                          }).toList(),
+                                                                        ),
+                                                                        if (comment['replies'].length >
+                                                                            1)
+                                                                          TextButton(
+                                                                              onPressed: () {
+                                                                                replyState(() {
+                                                                                  showAllReplies = !showAllReplies;
+                                                                                });
+                                                                              },
+                                                                              child: Align(
+                                                                                alignment: Alignment.centerLeft,
+                                                                                child: Text(                                                                                  
+                                                                                  isTranslated
+                                                                                    ? showAllReplies
+                                                                                        ? translatedHideReplies
+                                                                                        : translatedShowReplies
+                                                                                    : showAllReplies
+                                                                                        ? 'Hide'
+                                                                                        : 'Show all replies (${comment['replies'].length})',
+                                                                                  style: TextStyle(
+                                                                                    color: Colors.grey[700],
+                                                                                    fontWeight: FontWeight.bold,
+                                                                                    fontSize: 14,
+                                                                                  ),
+                                                                                ),
+                                                                              )),
+                                                                      ],
+                                                                    ),
+                                                                    const Divider(),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          }).toList(),
+                                                        )
+                                                      : const Text(
+                                                          'No comments yet.')
+                                                    : _comments.isNotEmpty
                                                       ? Column(
                                                           children: _comments.map((comment) {
                                                             bool showAllReplies =false;
@@ -461,19 +605,22 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                               crossAxisAlignment: CrossAxisAlignment.start,
                                                                               children: [
                                                                                 Text(
-                                                                                  '${comment['users']['username']}',
+                                                                                  comment['users']['username'],
                                                                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                                                                 ),
                                                                                 Text(comment['content'], style: const TextStyle(fontSize: 16, color: Colors.black)),
                                                                                 TextButton(
                                                                                   onPressed: () {
-                                                                                    replyState(() {
+                                                                                    setState(() {
                                                                                       parentId = comment['id'];
                                                                                       _isReplyMode = true;
                                                                                     });
                                                                                     print(parentId);
                                                                                   },
-                                                                                  child: Text('Reply', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
+                                                                                  child: Text( isTranslated 
+                                                                                    ?translatedReplyTextButton
+                                                                                    : 'Reply',
+                                                                                    style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 12)),
                                                                                 ),
                                                                               ],
                                                                             )
@@ -481,10 +628,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                         ),
                                                                         Column(
                                                                           children: comment['replies'].take(showAllReplies ? comment['replies'].length : 1).map<Widget>((reply) {
-                                                                            // var replyUsername =translator.translate('${reply['users']['username']}', to: "hi");
-                                                                            // setState(() {
-                                                                            //   translatedReply = replyUsername.text;
-                                                                            // });
 
                                                                             return Padding(
                                                                               padding: const EdgeInsets.only(left: 20.0),
@@ -501,7 +644,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                                 ),
                                                                                 title: Text(
                                                                                   '${reply['users']['username']}',
-                                                                                  // translatedReply.toString(),
                                                                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                                                                 ),
                                                                                 subtitle: Text(
@@ -522,8 +664,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                               },
                                                                               child: Align(
                                                                                 alignment: Alignment.centerLeft,
-                                                                                child: Text(
-                                                                                  showAllReplies ? 'Hide' : 'Show all replies (${comment['replies'].length})',
+                                                                                child: Text(                                                                                  
+                                                                                  isTranslated
+                                                                                    ? showAllReplies
+                                                                                        ? translatedHideReplies
+                                                                                        : translatedShowReplies
+                                                                                    : showAllReplies
+                                                                                        ? 'Hide'
+                                                                                        : 'Show all replies (${comment['replies'].length})',
                                                                                   style: TextStyle(
                                                                                     color: Colors.grey[700],
                                                                                     fontWeight: FontWeight.bold,
@@ -560,10 +708,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                           InputDecoration(
                                                         filled: true,
                                                         fillColor: Colors.white,
-                                                        hintText: parentId ==
-                                                                null
-                                                            ? 'Add a new comment'
-                                                            : 'Reply to comment',
+                                                        hintText:isTranslated  
+                                                        ? parentId ==null
+                                                          ? translatedNewComment
+                                                          : translatedReplyComment
+                                                        : parentId == null
+                                                          ? 'Add a new comment'
+                                                          : 'Reply to comment',
                                                         suffixIcon: _isReplyMode
                                                             ? IconButton(
                                                                 icon: const Icon(Icons.cancel_sharp),
@@ -589,7 +740,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                   IconButton.filled(
                                                       padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 10.0),
                                                       onPressed: () {
-                                                        _addComment(_commentController.text);
+                                                        setState((){
+                                                          _addComment(_commentController.text);
+                                                        });
                                                       },
                                                       icon: const Icon(Icons.send))
                                                 ],
@@ -600,16 +753,16 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                   });
                                 });
                           },
-                          child: Text(translatedButton,
+                          child: Text(
+                            isTranslated ? translatedButton : 'Comment',
                               style: const TextStyle(color: Colors.white)),
-                          // child: translator.translate('Comment'),
                         ),
                       ),
                       Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Text(
-                            translatedPostContent,
-                            // parsedData,
+                            isTranslated ? translatedPostContent : parsedData,
+                            // translatedPostContent,
                             style: const TextStyle(fontSize: 16),
                           )),
                       Padding(
@@ -620,35 +773,27 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Text(
-                              translatedPostAuthor,
-                              // _translate(),
-                              // _translate('Author: ${_post!['authors']['display']}').toString(),
-                              // _translateData().toString(),
+                              isTranslated ? translatedPostAuthor : 'Author: ${_post!['authors']['display']}',
                               style: const TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              // translatedPostCDate ${_formatDate(_post!['timestamp'])},
-                              translatedPostCDate,
-                              
+                              isTranslated ? translatedPostCDate : 'Created Date: ${_formatDate(_post!['timestamp'])}',
                               style: const TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              translatedPostPDate,
-                              // 'Published Date: ${_formatDate(_post!['utimestamp'])}',
+                              isTranslated ? translatedPostPDate : 'Published Date: ${_formatDate(_post!['utimestamp'])}',
                               style: const TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              // 'Tags: ${_getTagTitles(_post!['tag'])}',
-                              translatedTags,
+                              isTranslated ? translatedTags : 'Tags: ${_getTagTitles(_post!['tag'])}',
                               style: const TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              // 'Category: ${_categoryMap[_post!['category']]}',
-                              translatedCategory,
+                              isTranslated ? translatedCategory : 'Category: ${_categoryMap[_post!['category']]}',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
