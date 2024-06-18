@@ -186,7 +186,6 @@ class BlogPostsPage extends StatefulWidget {
 
 class _BlogPostsPageState extends State<BlogPostsPage> {
   GoogleTranslator translator = GoogleTranslator();
-
   List<dynamic> _posts = [];
   bool _isLoading = false;
   bool _hasError = false;
@@ -230,19 +229,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     DateTime dateTime = DateTime.parse(timestamp);
     return DateFormat('MMM dd, yyyy ').format(dateTime);
   }
-
-
-
-  String text = "Hello , How are you ?";
-
-  // void translate() {
-  //   translator.translate(text, to: "hi").then((output) {
-  //     setState(() {
-  //       text = output.toString();
-  //     });
-  //   });
-  // }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,19 +243,12 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                   itemCount: _posts.length,
                   itemBuilder: (context, index) {
                     final post = _posts[index];
-
                     String postTitle =post['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
                     String postTime = formatTimestamp(post['timestamp']);
-
-                    // translator.translate(postTitle , to: "hi").then((result) => print("Source: $postTitle \n Translated : $result"));
-
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Column(
                         children: [
-                          // Text(text),
-                          // ElevatedButton(
-                          //     onPressed: translate, child: Text('Translate')),
                           Card(
                             elevation: 10,
                             shape: RoundedRectangleBorder(
@@ -312,7 +292,6 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                                       children: <Widget>[
                                         Text(
                                           postTitle,
-                                          // translator.translate(postTitle , to: "hi").then((result) => print("Source: $postTitle \n Translated : $result")).toString(),
                                           style: const TextStyle(
                                             fontSize: 18,
                                             color: Colors.black,
@@ -331,8 +310,7 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
                                       ],
                                     ),
                                   ),
-                                  Container(height: 10),
-                                  
+                                  Container(height: 10),                                  
                                 ],
                               ),
                             ),
@@ -345,18 +323,3 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     );
   }
 }
-
-
-  // Future<void> _translateTitle(int index) async {
-  //   final translatedText = await translator.translate(
-  //     _posts[index]['title'],
-  //     to: 'hi',
-  //   );
-  //   setState(() {
-  //     _posts[index]['title'] = translatedText.text;
-  //   });
-  // }
-  // ElevatedButton(
-  //                                   onPressed: () => _translateTitle(index),
-  //                                   child: const Text('Translate to Hindi'),
-  //                                 ),

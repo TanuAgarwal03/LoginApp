@@ -55,6 +55,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   List<Map<String, dynamic>> translatedCommentsList = [];
   bool isTranslated = false;
 
+  bool _isTranslating = false;
   @override
   void initState() {
     super.initState();
@@ -96,7 +97,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         dom.Document document = htmlParser.parse(_post!['content']);
         parsedData = parseDocument(document);
         setState(() {
-          // _translateData();
+          _translateData("en");
           _isLoading = false;
         });
       } else {
@@ -234,8 +235,8 @@ Future<void> _addComment(String comment) async {
 
   try {
     if (isTranslated) {
-      var translatedComment = await translator.translate(comment, to: 'hi');
-      comment = translatedComment.text;
+      // var translatedComment = await translator.translate(comment, to: );
+      // comment = translatedComment.text;
     }
 
     Map<String, dynamic> requestBody = {
@@ -289,67 +290,103 @@ Future<void> _addComment(String comment) async {
     return DateFormat('MMM dd, yyyy').format(dateTime);
   }
 
-    Future<void> _translateData() async {
-    try {
-      var titleTranslate = await translator.translate(postTitle, to: 'hi');
-      var contentTranslate = await translator.translate(parsedData, to: 'hi');
-      var authorTranslate = await translator.translate('Author: ${_post!['authors']['display']}' , to: 'hi');
-      var createdDate = await translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}' , to: 'hi');
-      var publishedDate = await translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}' , to: 'hi');
-      var tagsTranslate = await translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi');
-      var categoryTranslate = await translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi');
-      var commentButton = await translator.translate(text , to: 'hi');
-      var replyTextButton = await translator.translate('Reply', to: 'hi');
-      var hideReplies = await translator.translate('Hide', to: 'hi');
-      var showReplies = await translator.translate('Show all replies' , to: 'hi');
-      var newComment = await translator.translate('Add a new comment' , to: 'hi');
-      var replyComment = await translator.translate('Reply to comment' , to: 'hi');
 
-      List<Map<String, dynamic>> translatedComments = [];
-      for (var comment in _comments) {
-        var translatedUsername = await translator.translate(comment['users']['username'], to: 'hi');
-        var translatedContent = await translator.translate(comment['content'], to: 'hi');
+  Future<void> _translateData(String languageCode) async {
+    setState(() {
+      _isTranslating = true;
+    });
+  try {
+    final List<Future> futures = [];
+    // Translate static content
+    final titleFuture = translator.translate(postTitle, to: languageCode).then((value) => value.text);
+    final contentFuture = translator.translate(parsedData, to: languageCode).then((value) => value.text);
+    final authorFuture = translator.translate('Author: ${_post!['authors']['display']}', to: languageCode).then((value) => value.text);
+    final createdDateFuture = translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}', to: languageCode).then((value) => value.text);
+    final publishedDateFuture = translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}', to: languageCode).then((value) => value.text);
+    final tagsFuture = translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: languageCode).then((value) => value.text);
+    final categoryFuture = translator.translate('Category: ${_categoryMap[_post!['category']]}', to: languageCode).then((value) => value.text);
+    final commentButtonFuture = translator.translate(text, to: languageCode).then((value) => value.text);
+    final replyTextButtonFuture = translator.translate('Reply', to: languageCode).then((value) => value.text);
+    final hideRepliesFuture = translator.translate('Hide', to: languageCode).then((value) => value.text);
+    final showRepliesFuture = translator.translate('Show all replies', to: languageCode).then((value) => value.text);
+    final newCommentFuture = translator.translate('Add a new comment', to: languageCode).then((value) => value.text);
+    final replyCommentFuture = translator.translate('Reply to comment', to: languageCode).then((value) => value.text);
 
-        List<Map<String, dynamic>> translatedReplies = [];
-        for (var reply in comment['replies']) {
-          var translatedReplyUsername = await translator.translate(reply['users']['username'], to: 'hi');
-          var translatedReplyContent = await translator.translate(reply['content'], to: 'hi');
-          translatedReplies.add({
-            'users': {'username': translatedReplyUsername.text},
-            'content': translatedReplyContent.text,
-          });
-        }
+    futures.addAll([
+      titleFuture,
+      contentFuture,
+      authorFuture,
+      createdDateFuture,
+      publishedDateFuture,
+      tagsFuture,
+      categoryFuture,
+      commentButtonFuture,
+      replyTextButtonFuture,
+      hideRepliesFuture,
+      showRepliesFuture,
+      newCommentFuture,
+      replyCommentFuture,
+    ]);
 
-        translatedComments.add({
-          'id' : comment['id'],
-          'users': {'username': translatedUsername.text},
-          'content': translatedContent.text,
-          'replies': translatedReplies,
-        });
+    final List<Map<String, dynamic>> translatedComments = [];
+    for (var comment in _comments) {
+      final usernameFuture = translator.translate(comment['users']['username'], to: languageCode).then((value) => value.text);
+      final contentFuture = translator.translate(comment['content'], to: languageCode).then((value) => value.text);
+
+      final List<Future<Map<String, dynamic>>> replyFutures = [];
+      for (var reply in comment['replies']) {
+        final translatedReplyUsernameFuture = translator.translate(reply['users']['username'], to: languageCode).then((value) => value.text);
+        final translatedReplyContentFuture = translator.translate(reply['content'], to: languageCode).then((value) => value.text);
+
+        replyFutures.add(Future.wait([
+          translatedReplyUsernameFuture,
+          translatedReplyContentFuture,
+        ]).then((translatedValues) => ({
+          'users': {'username': translatedValues[0]},
+          'content': translatedValues[1],
+        })));
       }
 
-      setState(() {
-        isTranslated = true;
-        translatedPostTitle = titleTranslate.text;
-        translatedPostContent = contentTranslate.text;
-        translatedPostAuthor = authorTranslate.text;
-        translatedPostCDate = createdDate.text;
-        translatedPostPDate = publishedDate.text;
-        translatedTags = tagsTranslate.text;
-        translatedCategory = categoryTranslate.text;
-        translatedButton = commentButton.text;
-        translatedCommentsList = translatedComments;
-        translatedReplyTextButton = replyTextButton.text;
-        translatedHideReplies = hideReplies.text;
-        translatedShowReplies = showReplies.text;
-        translatedNewComment = newComment.text;
-        translatedReplyComment = replyComment.text;
+      final translatedReplies = await Future.wait(replyFutures);
+      final translatedUsername = await usernameFuture;
+      final translatedContent = await contentFuture;
 
+      translatedComments.add({
+        'id': comment['id'],
+        'users': {'username': translatedUsername},
+        'content': translatedContent,
+        'replies': translatedReplies,
       });
-    } catch (e) {
-      print('Error translating title: $e');
     }
+
+    // Wait for all translations to complete
+    final List<dynamic> translations = await Future.wait(futures);
+    setState(() {
+      isTranslated = true;
+      translatedPostTitle = translations[0];
+      translatedPostContent = translations[1];
+      translatedPostAuthor = translations[2];
+      translatedPostCDate = translations[3];
+      translatedPostPDate = translations[4];
+      translatedTags = translations[5];
+      translatedCategory = translations[6];
+      translatedButton = translations[7];
+      translatedReplyTextButton = translations[8];
+      translatedHideReplies = translations[9];
+      translatedShowReplies = translations[10];
+      translatedNewComment = translations[11];
+      translatedReplyComment = translations[12];
+      translatedCommentsList = translatedComments;
+      
+    });
+  } catch (e) {
+    print('Error translating data: $e');
+  }finally {
+    setState(() {
+      _isTranslating = false;
+    });
   }
+}
 
   void _reverseTranslation() {
     setState(() {
@@ -361,12 +398,19 @@ Future<void> _addComment(String comment) async {
     if (language == 'English') {
       setState(() {
         _reverseTranslation();
+        // _translateData("en");
         isTranslated==false;
       });
       
     } else if (language == 'Hindi') {
       setState(() {
-         _translateData();
+         _translateData("hi");
+          isTranslated == true;
+      });
+    }
+    else if (language == 'Gujrati') {
+      setState(() {
+         _translateData("gu");
           isTranslated == true;
       });
     }
@@ -407,6 +451,10 @@ Future<void> _addComment(String comment) async {
               const PopupMenuItem<String>(
                 value: 'Hindi',
                 child: Text('Hindi'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Gujrati',
+                child: Text('Gujrati'),
               ),
             ],
             icon: const Icon(Icons.language_outlined),
@@ -449,6 +497,10 @@ Future<void> _addComment(String comment) async {
               const PopupMenuItem<String>(
                 value: 'Hindi',
                 child: Text('Hindi'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Gujrati',
+                child: Text('Gujrati'),
               ),
             ],
             icon: const Icon(Icons.language_outlined),
@@ -493,6 +545,10 @@ Future<void> _addComment(String comment) async {
                 value: 'Hindi',
                 child: Text('Hindi'),
               ),
+              const PopupMenuItem<String>(
+                value: 'Gujrati',
+                child: Text('Gujrati'),
+              ),
             ],
             icon: const Icon(Icons.language_outlined),
             tooltip: 'Change Language',
@@ -500,7 +556,12 @@ Future<void> _addComment(String comment) async {
         ],
           backgroundColor: Colors.blue,
         ),
-        body: SingleChildScrollView(
+        body:_isTranslating
+        ? const Center(
+            child: CircularProgressIndicator(),
+          )
+        : 
+        SingleChildScrollView(
           child: _post != null
               ? Padding(
                   padding: const EdgeInsets.all(25.0),
@@ -509,8 +570,6 @@ Future<void> _addComment(String comment) async {
                     children: [
                       Text(
                         isTranslated ? translatedPostTitle : postTitle,
-                        // translatedPostTitle,
-                        // postTitle,
                         style: const TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
@@ -926,3 +985,213 @@ Future<void> _addComment(String comment) async {
     }
   }
 }
+
+
+
+//using only Batch processing
+//   Future<void> _translateData() async {
+//   try {
+//     final translations = await Future.wait([
+//       translator.translate(postTitle, to: 'hi'),
+//       translator.translate(parsedData, to: 'hi'),
+//       translator.translate('Author: ${_post!['authors']['display']}', to: 'hi'),
+//       translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}', to: 'hi'),
+//       translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}', to: 'hi'),
+//       translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi'),
+//       translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi'),
+//       translator.translate(text, to: 'hi'),
+//       translator.translate('Reply', to: 'hi'),
+//       translator.translate('Hide', to: 'hi'),
+//       translator.translate('Show all replies', to: 'hi'),
+//       translator.translate('Add a new comment', to: 'hi'),
+//       translator.translate('Reply to comment', to: 'hi'),
+//     ]);
+
+//     final List<Map<String, dynamic>> translatedComments = [];
+
+//     for (var comment in _comments) {
+//       var translatedUsername = await translator.translate(comment['users']['username'], to: 'hi');
+//       var translatedContent = await translator.translate(comment['content'], to: 'hi');
+
+//       List<Map<String, dynamic>> translatedReplies = [];
+//       for (var reply in comment['replies']) {
+//         var translatedReplyUsername = await translator.translate(reply['users']['username'], to: 'hi');
+//         var translatedReplyContent = await translator.translate(reply['content'], to: 'hi');
+//         translatedReplies.add({
+//           'users': {'username': translatedReplyUsername.text},
+//           'content': translatedReplyContent.text,
+//         });
+//       }
+
+//       translatedComments.add({
+//         'id': comment['id'],
+//         'users': {'username': translatedUsername.text},
+//         'content': translatedContent.text,
+//         'replies': translatedReplies,
+//       });
+//     }
+
+//     setState(() {
+//       isTranslated = true;
+//       translatedPostTitle = translations[0].text;
+//       translatedPostContent = translations[1].text;
+//       translatedPostAuthor = translations[2].text;
+//       translatedPostCDate = translations[3].text;
+//       translatedPostPDate = translations[4].text;
+//       translatedTags = translations[5].text;
+//       translatedCategory = translations[6].text;
+//       translatedButton = translations[7].text;
+//       translatedReplyTextButton = translations[8].text;
+//       translatedHideReplies = translations[9].text;
+//       translatedShowReplies = translations[10].text;
+//       translatedNewComment = translations[11].text;
+//       translatedReplyComment = translations[12].text;
+//       translatedCommentsList = translatedComments;
+//     });
+//   } catch (e) {
+//     print('Error translating data: $e');
+//   }
+// }
+
+
+
+// parallel requests 
+//   Future<void> _translateData() async {
+//   try {
+//     final List<Future<String>> translationFutures = [];
+
+//     // Translate static content
+//     translationFutures.addAll([
+//       translator.translate(postTitle, to: 'hi').then((value) => value.text),
+//       translator.translate(parsedData, to: 'hi').then((value) => value.text),
+//       translator.translate('Author: ${_post!['authors']['display']}', to: 'hi').then((value) => value.text),
+//       translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}', to: 'hi').then((value) => value.text),
+//       translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}', to: 'hi').then((value) => value.text),
+//       translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi').then((value) => value.text),
+//       translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi').then((value) => value.text),
+//       translator.translate(text, to: 'hi').then((value) => value.text),
+//       translator.translate('Reply', to: 'hi').then((value) => value.text),
+//       translator.translate('Hide', to: 'hi').then((value) => value.text),
+//       translator.translate('Show all replies', to: 'hi').then((value) => value.text),
+//       translator.translate('Add a new comment', to: 'hi').then((value) => value.text),
+//       translator.translate('Reply to comment', to: 'hi').then((value) => value.text),
+//     ]);
+
+//     // Translate comments and replies
+//     final List<Map<String, dynamic>> translatedComments = [];
+//     for (var comment in _comments) {
+//       translationFutures.add(translator.translate(comment['users']['username'], to: 'hi').then((value) => value.text));
+//       translationFutures.add(translator.translate(comment['content'], to: 'hi').then((value) => value.text));
+
+//       List<Future<Map<String, dynamic>>> replyFutures = [];
+//       for (var reply in comment['replies']) {
+//         replyFutures.add(translator.translate(reply['users']['username'], to: 'hi').then((value) => value.text)
+//             .then((translatedReplyUsername) => translator.translate(reply['content'], to: 'hi').then((value) => value.text)
+//             .then((translatedReplyContent) => ({
+//                 'users': {'username': translatedReplyUsername},
+//                 'content': translatedReplyContent,
+//               }),
+//             ),
+//           ),
+//         );
+//       }
+
+//       // Wait for all replies to be translated before adding them to the comment
+//       List<Map<String, dynamic>> translatedReplies = await Future.wait(replyFutures);
+//       translatedComments.add({
+//         'id': comment['id'],
+//         'users': {'username': await translationFutures[translationFutures.length - 2]},
+//         'content': await translationFutures[translationFutures.length - 1],
+//         'replies': translatedReplies,
+//       });
+//     }
+
+//     // Wait for all translations to complete
+//     List<String> translations = await Future.wait(translationFutures);
+
+//     setState(() {
+//       isTranslated = true;
+//       translatedPostTitle = translations[0];
+//       translatedPostContent = translations[1];
+//       translatedPostAuthor = translations[2];
+//       translatedPostCDate = translations[3];
+//       translatedPostPDate = translations[4];
+//       translatedTags = translations[5];
+//       translatedCategory = translations[6];
+//       translatedButton = translations[7];
+//       translatedReplyTextButton = translations[8];
+//       translatedHideReplies = translations[9];
+//       translatedShowReplies = translations[10];
+//       translatedNewComment = translations[11];
+//       translatedReplyComment = translations[12];
+//       translatedCommentsList = translatedComments;
+//     });
+//   } catch (e) {
+//     print('Error translating data: $e');
+//   }
+// }
+
+
+//simplest 
+
+  //   Future<void> _translateData() async {
+  //   try {
+  //     var titleTranslate = await translator.translate(postTitle, to: 'hi');
+  //     var contentTranslate = await translator.translate(parsedData, to: 'hi');
+  //     var authorTranslate = await translator.translate('Author: ${_post!['authors']['display']}' , to: 'hi');
+  //     var createdDate = await translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}' , to: 'hi');
+  //     var publishedDate = await translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}' , to: 'hi');
+  //     var tagsTranslate = await translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi');
+  //     var categoryTranslate = await translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi');
+  //     var commentButton = await translator.translate(text , to: 'hi');
+  //     var replyTextButton = await translator.translate('Reply', to: 'hi');
+  //     var hideReplies = await translator.translate('Hide', to: 'hi');
+  //     var showReplies = await translator.translate('Show all replies' , to: 'hi');
+  //     var newComment = await translator.translate('Add a new comment' , to: 'hi');
+  //     var replyComment = await translator.translate('Reply to comment' , to: 'hi');
+
+  //     List<Map<String, dynamic>> translatedComments = [];
+  //     for (var comment in _comments) {
+  //       var translatedUsername = await translator.translate(comment['users']['username'], to: 'hi');
+  //       var translatedContent = await translator.translate(comment['content'], to: 'hi');
+
+  //       List<Map<String, dynamic>> translatedReplies = [];
+  //       for (var reply in comment['replies']) {
+  //         var translatedReplyUsername = await translator.translate(reply['users']['username'], to: 'hi');
+  //         var translatedReplyContent = await translator.translate(reply['content'], to: 'hi');
+  //         translatedReplies.add({
+  //           'users': {'username': translatedReplyUsername.text},
+  //           'content': translatedReplyContent.text,
+  //         });
+  //       }
+
+  //       translatedComments.add({
+  //         'id' : comment['id'],
+  //         'users': {'username': translatedUsername.text},
+  //         'content': translatedContent.text,
+  //         'replies': translatedReplies,
+  //       });
+  //     }
+
+  //     setState(() {
+  //       isTranslated = true;
+  //       translatedPostTitle = titleTranslate.text;
+  //       translatedPostContent = contentTranslate.text;
+  //       translatedPostAuthor = authorTranslate.text;
+  //       translatedPostCDate = createdDate.text;
+  //       translatedPostPDate = publishedDate.text;
+  //       translatedTags = tagsTranslate.text;
+  //       translatedCategory = categoryTranslate.text;
+  //       translatedButton = commentButton.text;
+  //       translatedCommentsList = translatedComments;
+  //       translatedReplyTextButton = replyTextButton.text;
+  //       translatedHideReplies = hideReplies.text;
+  //       translatedShowReplies = showReplies.text;
+  //       translatedNewComment = newComment.text;
+  //       translatedReplyComment = replyComment.text;
+
+  //     });
+  //   } catch (e) {
+  //     print('Error translating title: $e');
+  //   }
+  // }

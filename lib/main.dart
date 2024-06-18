@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:login_page/change_password.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,11 +41,21 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
+  bool _isLoading = false;
+  late String userID;
+  late String token;
+  Map userdata = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserData();
+  }
 
   final List<Widget> _widgetOptions = <Widget>[
     const BlogPostsPage(),
-    const PollListPage(token: 'token', poll: {}),
-    const UserDetailPage(userId: 'userId', token: 'token'),
+    const PollListPage(token: '', poll: {}),
+    const UserDetailPage(userId: '', token: ''),
     const ChangePasswordPage(),
   ];
 
@@ -51,8 +63,9 @@ class _MainPageState extends State<MainPage> {
 
   void _onItemTapped(int index) {
     setState(() {
+      _isLoading = true;
       _selectedIndex = index;
-    }); 
+    });
     Navigator.pop(context); // Close the drawer after selecting an item
   }
 
@@ -64,6 +77,32 @@ class _MainPageState extends State<MainPage> {
       MaterialPageRoute(builder: (context) => const LoginPage()),
       (Route<dynamic> route) => false,
     );
+  }
+
+  Future<void> _getUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? widget.token;
+    userID = prefs.getString('userId') ?? widget.userId;
+
+    final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/profile/'),
+      headers: {
+        'Authorization': 'Token $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        userdata = jsonDecode(response.body)['results'][0];
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -80,22 +119,57 @@ class _MainPageState extends State<MainPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: Colors.blue,
               ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (userdata['image'] != null && userdata['image'].isNotEmpty)
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundImage: NetworkImage(
+                        userdata['image'].startsWith('http://') || userdata['image'].startsWith('https://')
+                            ? userdata['image']
+                            : 'https://test.securitytroops.in/stapi/v1/profile/${userdata['image']}',
+                      ),
+                      onBackgroundImageError: (_, __) => const Icon(Icons.account_circle_rounded),
+                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            userdata['username'] ?? 'Username',
+                            style: const TextStyle(color: Colors.white, fontSize: 18 , fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            userdata['email'] ?? 'Email',
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                      )
+                    ],
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Blogs'),
               onTap: () {
+                _isLoading = true;
                 _onItemTapped(0);
               },
             ),
@@ -110,21 +184,20 @@ class _MainPageState extends State<MainPage> {
               leading: const Icon(Icons.account_circle_outlined),
               title: const Text('User Detail'),
               onTap: () {
-                _onItemTapped(2);
+                setState(() {
+                  _selectedIndex = 2;
+                });
+                Navigator.pop(context); // Close the drawer
               },
             ),
             ListTile(
               leading: const Icon(Icons.key_rounded),
               title: const Text('Change Password'),
               onTap: () {
-                _onItemTapped(3);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                _logout();
+                setState(() {
+                  _selectedIndex = 3;
+                });
+                Navigator.pop(context); // Close the drawer
               },
             ),
           ],
@@ -143,20 +216,17 @@ class _MainPageState extends State<MainPage> {
             label: 'Blogs',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.logout),
-            label: 'Logout',
+            icon: Icon(Icons.poll_sharp),
+            label: 'Polls',
           ),
         ],
-        // currentIndex: _selectedIndex,
+        currentIndex: _selectedIndex < 2 ? _selectedIndex : 0,
         selectedItemColor: Colors.blue,
         backgroundColor: Colors.lightBlue[50],
         onTap: (index) {
-          if (index == 1) {
-            _logout();
-          } else {
-            BlogPostsPage();
-          }
-          
+          setState(() {
+            _selectedIndex = index;
+          });
         },
       ),
     );

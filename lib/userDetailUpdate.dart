@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
@@ -16,6 +17,7 @@ class UpdateUserPage extends StatefulWidget {
 }
 
 class _UpdateUserPageState extends State<UpdateUserPage> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
@@ -31,6 +33,8 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   bool p_image = false;
   bool _isLoading = true;
   String _errorMessage = '';
+  bool _isMarried = false;
+  // String? _isMarried;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -72,8 +76,9 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
           _dobController.text = data['dob'] ?? '';
           _statusController.text = data['status'] ?? '';
           _selectedGender = data['gender'];
-          _marriedController.text = data['married'].toString();
           _mobileController.text = data['mobile'].toString();
+          _isMarried = data['married'] == 'true' ;
+          _marriedController.text = data['married'].toString();
           profile = data['image'] != null ? data['image'] : null;
 
           _selectedCountry = data['country'];
@@ -90,9 +95,9 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
         print('Failed to fetch user details. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      // setState(() {
+      //   _isLoading = false;
+      // });
       print('Error fetching user details: $e');
     }
   }
@@ -132,39 +137,40 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     }
   }
 
-  Future<void> _fetchStates(int countryId) async {
-    try {
-      final response = await http.get(
-          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'));
+Future<void> _fetchStates(int countryId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'),
+    );
 
-      if (response.statusCode == 200) {
-        final parsedResponse = jsonDecode(response.body);
-        List<dynamic> states = parsedResponse['results'];
+    if (response.statusCode == 200) {
+      final parsedResponse = jsonDecode(response.body);
+      List<dynamic> states = parsedResponse['results'];
 
-        setState(() {
-          _states = states
-              .where((state) => state['country'] == countryId)
-              .map<Map<String, dynamic>>((state) {
-            return {
-              'id': state['id'],
-              'name': state['name'],
-            };
-          }).toList();
-        });
-      } else {
-        throw Exception('Failed to load states');
-      }
-    } catch (e) {
-      print('Error loading states: $e');
       setState(() {
-        _errorMessage = 'Failed to load states';
+        _states = states
+            .where((state) => state['country'] == countryId)
+            .map<Map<String, dynamic>>((state) {
+              return {
+                'id': state['id'],
+                'name': state['name'],
+              };
+            }).toList();
       });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    } else {
+      throw Exception('Failed to load states');
     }
+  } catch (e) {
+    print('Error loading states: $e');
+    setState(() {
+      _errorMessage = 'Failed to load states';
+    });
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -227,16 +233,15 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   }
 
   Future<void> _updateUserDetails() async {
+    if (_formKey.currentState?.validate() ?? false){
     String username = _usernameController.text.trim();
     String email = _emailController.text.trim();
     String firstName = _firstNameController.text.trim();
     String lastName = _lastNameController.text.trim();
-    String status = _statusController.text.trim();
     String dob = _dobController.text.trim();
     String gender = _selectedGender ?? '';
-    String married = _marriedController.text.trim();
     String mobile = _mobileController.text.trim();
-
+    
     try {
       var request = http.MultipartRequest(
         'PATCH',
@@ -248,10 +253,9 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       request.fields['email'] = email;
       request.fields['first_name'] = firstName;
       request.fields['last_name'] = lastName;
-      request.fields['status'] = status;
+      request.fields['married'] = _isMarried.toString();
       request.fields['dob'] = dob;
       request.fields['gender'] = gender;
-      request.fields['married'] = married;
       request.fields['mobile'] = mobile;
 
       if (_selectedCountry != null) {
@@ -273,6 +277,15 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
         final updatedData = jsonDecode(responseBody);
         Navigator.pop(context, updatedData);
         print("Details updated");
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Details updated successfully !!' , style: TextStyle(color: Colors.white),),
+              backgroundColor: Colors.green,
+              margin: EdgeInsets.all(5),
+              elevation: 10,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
       } else {
         print('Failed to update user details. Status code: ${response.statusCode}');
       }
@@ -280,151 +293,354 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       print('Error updating user details: $e');
     }
   }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Update User Details'),
+          title: const Text('Update User Details', style: TextStyle(color: Colors.white),),
+          backgroundColor: Colors.blue,
+          iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : Container(
                 padding: const EdgeInsets.all(20.0),
                 child: SingleChildScrollView(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      Center(
-                        child: GestureDetector(
-                          onTap: showOptions,
-                          child: ClipOval(
-                            child: p_image
-                                ? Image.file(
-                                    _image!,
-                                    height: 100,
-                                    width: 100,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
-                                      return const Icon(Icons.person_4_rounded ); 
-                                    }
-                                  )
-                                : Image.network(
-                                    '$profile',
-                                    height: 100,
-                                    width: 100,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
-                                      return const Icon(Icons.person_4_rounded ); 
-                                    }
-                                  ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                        Center(
+                          child: GestureDetector(
+                            onTap: showOptions,
+                            child: ClipOval(
+                              child: p_image
+                                  ? Image.file(
+                                      _image!,
+                                      height: 100,
+                                      width: 100,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
+                                        return const Icon(Icons.person_4_rounded ); 
+                                      }
+                                    )
+                                  : Image.network(
+                                      '$profile',
+                                      height: 100,
+                                      width: 100,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (BuildContext context , Object exception , StackTrace? stackTrace) {
+                                        return const Icon(Icons.person_4_rounded ); 
+                                      }
+                                    ),
+                            ),
                           ),
                         ),
-                      ),
-                      const Center(
-                        child: Text('User Profile'),
-                      ),
-                      TextFormField(
-                        controller: _usernameController,
-                        decoration:
-                            const InputDecoration(labelText: 'Username'),
-                      ),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(labelText: 'Email'),
-                      ),
-                      TextFormField(
-                        controller: _firstNameController,
-                        decoration:
-                            const InputDecoration(labelText: 'First Name'),
-                      ),
-                      TextFormField(
-                        controller: _lastNameController,
-                        decoration:
-                            const InputDecoration(labelText: 'Last Name'),
-                      ),
-                      TextFormField(
-                        controller: _dobController,
-                        readOnly: true,
-                        onTap: () =>
-                            _selectDate(context),
-                        decoration:
-                            const InputDecoration(labelText: 'Date of Birth'),
-                      ),
-                      TextFormField(
-                        controller: _statusController,
-                        decoration: const InputDecoration(labelText: 'Status'),
-                      ),
-                      DropdownButtonFormField<String>(
-                        value: _selectedGender,
-                        items: const [
-                          DropdownMenuItem(value: 'Male', child: Text('Male')),
-                          DropdownMenuItem(
-                              value: 'Female', child: Text('Female')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedGender = value;
-                          });
-                        },
-                        decoration: const InputDecoration(labelText: 'Gender'),
-                      ),
-                      TextFormField(
-                        controller: _marriedController,
-                        decoration: const InputDecoration(
-                          labelText: 'Married',
+                        const Center(
+                          child: Text('User Profile'),
                         ),
-                      ),
-                      TextFormField(
-                        controller: _mobileController,
-                        decoration: const InputDecoration(labelText: 'Contact'),
-                      ),
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<int>(
-                        hint: const Text('Select country'),
-                        value: _selectedCountry,
-                        onChanged: (int? value) {
-                          setState(() {
-                            _selectedCountry = value;
-                            _selectedState = null;
-                            _states = [];
-                          });
-                          print(_selectedCountry);
-                          if (value != null) {
-                            _fetchStates(value);
-                          }
-                        },
-                        items: _countries.map<DropdownMenuItem<int>>((country) {
-                          return DropdownMenuItem<int>(
-                            key: Key(country['name']),
-                            value: country['id'],
-                            child: Text(country['name']),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<int>(
-                        hint: const Text('Select State'),
-                        value: _selectedState,
-                        onChanged: (int? value) {
-                          setState(() {
-                            _selectedState = value;
-                          });
-                        },
-                        items: _states.map<DropdownMenuItem<int>>((state) {
-                          return DropdownMenuItem<int>(
-                            key: Key(state['name']),
-                            value: state['id'],
-                            child: Text(state['name']),
-                          );
-                        }).toList(),
-                      ),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: _updateUserDetails,
-                          child: const Text('Update'),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _usernameController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Username field cannot be empty';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Username',                            
+                          ),
                         ),
-                      ),
-                    ]))));
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          controller: _emailController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Email',                            
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          controller: _firstNameController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your first name';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'First Name',                            
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          controller: _lastNameController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your last name';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Last Name',                            
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          controller: _dobController,
+                          readOnly: true,
+                          onTap: () =>
+                              _selectDate(context),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Date of Birth',                            
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          controller: _mobileController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This is the required field* .';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Contact',                            
+                          ),
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        
+                        DropdownButtonFormField<String>(
+                          value: _selectedGender,
+                          items: const [
+                            DropdownMenuItem(value: 'Male', child: Text('Male')),
+                            DropdownMenuItem(
+                                value: 'Female', child: Text('Female')),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGender = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Gender',                            
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+
+                        CheckboxListTile(
+                          title: const Text('Married'),
+                          value: _isMarried,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              _isMarried = value!;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+
+                        const SizedBox(height: 15),
+                        DropdownButtonFormField<int>(
+                          hint: const Text('Select country'),
+                          value: _selectedCountry,
+                          onChanged: (int? value) {
+                            setState(() {
+                              _selectedCountry = value;
+                              _selectedState = null;
+                              _states = [];
+                            });
+                            print(_selectedCountry);
+                            if (value != null) {
+                              _fetchStates(value);
+                            }
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select a country';
+                            }
+                            return null;
+                          },
+                          items: _countries.map<DropdownMenuItem<int>>((country) {
+                            return DropdownMenuItem<int>(
+                              key: Key(country['name']),
+                              value: country['id'],
+                              child: Text(country['name']),
+                            );
+                          }).toList(),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'Country',                            
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<int>(
+                          hint: const Text('Select State'),
+                          value: _selectedState,
+                          onChanged: (int? value) {
+                            setState(() {
+                              _selectedState = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select a state';
+                            }
+                            return null;
+                          },
+                          items: _states.map<DropdownMenuItem<int>>((state) {
+                            return DropdownMenuItem<int>(
+                              key: Key(state['name']),
+                              value: state['id'],
+                              child: Text(state['name']),
+                            );
+                          }).toList(),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(color: Colors.blue),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 90, 89, 89)),
+                            ),
+                            labelText: 'State',                            
+                          ),
+                        ),
+
+                        const SizedBox(height: 25),                        
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: ElevatedButton(
+                            onPressed: _updateUserDetails,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              )
+                            ),
+                            child: const Text('Save Changes' , style: TextStyle(color: Colors.white , fontSize: 16),)
+                          ),
+                        )
+                        
+                      ]),
+                    )
+                  )
+                )
+              );
   }
 }

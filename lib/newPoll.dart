@@ -802,7 +802,7 @@ class _PollCreatorPageState extends State<PollCreatorPage> {
                     },
                   ),
                   const Text('Public'),
-                  const SizedBox(width: 100),
+                  const SizedBox(width: 50),
                   Checkbox(
                     value: immediateDeclare,
                     onChanged: (bool? value) {

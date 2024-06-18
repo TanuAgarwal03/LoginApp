@@ -74,9 +74,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            alignment: Alignment.center,
-            margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1),
+          Container(            
+            margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
             child: Column(             
               children: [
                 const SizedBox(height: 20.0),
@@ -118,10 +117,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   value: userdata['last_name'] ?? '',
                 ),
                 UserDetailItem(
-                  label: 'Status',
-                  value: userdata['status'] ?? '',
-                ),
-                UserDetailItem(
                   label: 'Date of Birth',
                   value: userdata['dob'] ?? '',
                 ),
@@ -130,21 +125,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   value: userdata['gender'] ?? '',
                 ),
                 UserDetailItem(
-                  label: 'Married',
-                  value: userdata['married'].toString(),
+                  label: 'Marital Status',
+                  value: userdata['married'] ? 'Married' : 'Single',
                 ),
                 UserDetailItem(
                   label: 'Contact',
                   value: userdata['mobile'].toString(),
                   ),
-                //  if (userdata['country'] != null) UserDetailItem(
-                //   label: 'Country',
-                //   value: userdata['country']['name'],
-                // ),
-                // if (userdata['state'] != null) UserDetailItem(
-                //   label: 'State',
-                //   value: userdata['state']['name'],
-                // ),
                 UserDetailItem(
                   label: 'Country',
                   value: userdata['countries']['name']
@@ -156,6 +143,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
               ],
             ),
           ),
+          const SizedBox(height: 15),
           Center(
             child: ElevatedButton(
               onPressed: () async {
@@ -174,7 +162,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   });
                 }
               },
-              child: const Text('Update User Details'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5.0),
+                )
+              ),
+              child: const Text('Edit User Details' , style: TextStyle(color: Colors.white),),
             ),
           ),
           const SizedBox(height: 10),

@@ -66,37 +66,18 @@ class _PollListPageState extends State<PollListPage> {
       ),
     );
   }
+  void refreshPollList() {
+    fetchPollData();
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        // appBar: AppBar(
-        //   title: const Text(
-        //     'Polls',
-        //     style: TextStyle(color: Colors.white),
-        //     textAlign: TextAlign.center,
-        //   ),
-        //   backgroundColor: Colors.blue,
-        //   iconTheme: const IconThemeData(
-        //     color: Colors.white,
-        //   ),
-        // ),
-        body: const Center(child: CircularProgressIndicator()),
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     } else {
       return Scaffold(
-        // appBar: AppBar(
-        //   title: const Text(
-        //     'Polls',
-        //     style: TextStyle(color: Colors.white),
-        //     textAlign: TextAlign.center,
-        //   ),
-        //   backgroundColor: Colors.blue,
-        //   iconTheme: const IconThemeData(
-        //     color: Colors.white,
-        //   ),
-        // ),
         body: Container(
           color: Colors.white,
           child: Column(
@@ -111,9 +92,14 @@ class _PollListPageState extends State<PollListPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(3.0),
                     ),
-                    
                   ),
-                  child: const Text('New Poll', style: TextStyle(color: Colors.white , fontSize: 16),),
+                  child: const Wrap(
+                    children: <Widget>[
+                      Icon(Icons.add , color: Colors.white, size: 22,), 
+                      SizedBox(width: 5),
+                      Text('New Poll', style: TextStyle(color: Colors.white , fontSize: 16),),
+                    ],
+                  )
                 ),
               ),
               Expanded(
@@ -193,6 +179,7 @@ class _PollListPageState extends State<PollListPage> {
                                                   token: token,
                                                   userId: userId,
                                                   poll: poll,
+                                                  refreshPollList:refreshPollList,
                                                 ),
                                               ),
                                             );

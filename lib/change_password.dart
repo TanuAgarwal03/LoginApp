@@ -215,10 +215,24 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Image.asset('assets/image/forgetpwd.jpg',height: 150.0, width: 150.0),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _oldPasswordController,
                 obscureText: !_oldPasswordVisible,
                 decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 90, 89, 89)),
+                  ),
                   labelText: 'Old Password',
                   suffixIcon: IconButton(
                     icon: Icon(_oldPasswordVisible ? Icons.visibility : Icons.visibility_off),
@@ -241,6 +255,18 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 controller: _newPasswordController,
                 obscureText: !_newPasswordVisible,
                 decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 90, 89, 89)),
+                  ),
                   labelText: 'New Password',
                   suffixIcon: IconButton(
                     icon: Icon(_newPasswordVisible ? Icons.visibility : Icons.visibility_off),
@@ -271,7 +297,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     });
                   }
                 },
-                child: const Text('Change Password'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5.0),
+                  )
+                ),
+                child: const Text('Change Password' , style: TextStyle(color: Colors.white , fontSize: 16),),
               ),
               const SizedBox(height: 20.0),
               if (_message.isNotEmpty)
