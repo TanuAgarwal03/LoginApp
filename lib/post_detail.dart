@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
 // import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
@@ -55,6 +57,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
   List<Map<String, dynamic>> translatedCommentsList = [];
   bool isTranslated = false;
 
+  // Map<int, Map<String, dynamic>> _likedUsersMap = {};
+  List<dynamic> _actions = [];
+  bool userExists = false;
+  bool currentLikeStatus = false;
+  String? actionId;
+
+
+  bool likeStatus = false;
+
   bool _isTranslating = false;
   @override
   void initState() {
@@ -74,11 +85,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
     mobile = prefs.getInt('mobile') ?? 0;
     userId = prefs.getInt('id') ?? 0;
     imageUrl = prefs.getString('image') ?? '';
+
+    // await _fetchPostDetail(); // Fetch post details first
+    await _checkUserExists(); // Check if user exists in post's actions
   }
 
   Future<void> _fetchPostDetail() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? '';
+    userId = prefs.getInt('id') ?? 0;
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -96,6 +111,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
         postTitle = _post!['title'].replaceAll(RegExp(r'[^\w\s]+'), '');
         dom.Document document = htmlParser.parse(_post!['content']);
         parsedData = parseDocument(document);
+
+
         setState(() {
           _translateData("en");
           _isLoading = false;
@@ -113,6 +130,317 @@ class _PostDetailPageState extends State<PostDetailPage> {
         _hasError = true;
       });
       print('Error loading post details: $e');
+    }
+  }
+
+  Future<void> _checkUserExists() async {
+  if (_post != null && _post!.containsKey('actions')) {
+    List<dynamic> actions = _post!['actions'];
+    
+    setState(() {
+      userExists = actions.any((action) => action['user'] == userId);
+    });
+  }
+}
+
+// Future<void> _toggleLike() async {
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   token = prefs.getString('token') ?? '';
+  
+//   setState(() {
+//     _isLoading = true;
+//   });
+
+//   try {
+//     for (var action in _post!['actions']) {
+//       if (!userExists) {
+//         // print(userExists);
+//         likeStatus = action['like'];
+//         actionId = action['id'].toString();
+//         break;
+//       }
+//     }
+//     setState(() {
+//       print('Like status : ${!likeStatus}');
+//       likeStatus ? _post!['likes']-- : _post!['likes']++;
+
+//       _post!['actions'].add({
+//         'id' : actionId,
+//         'user' : userId,
+//         'like' : !likeStatus,
+//       });     
+//     });
+
+//     final payload = {
+//         'like': !likeStatus,
+//         'post': _post!['id'],
+//         'user': userId,
+//       };
+
+//     final requestType = actionId != null ? 'patch' : 'post';
+//     final url = actionId != null
+//           ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+//           : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+
+//     final response = await (requestType == 'patch'
+//           ? http.patch(Uri.parse(url),
+//               headers: {
+//                 'Authorization': 'Token $token',
+//                 'Content-type': 'application/json',
+//               },
+//               body: json.encode(payload))
+//           : http.post(Uri.parse(url),
+//               headers: {
+//                 'Authorization': 'Token $token',
+//                 'Content-type': 'application/json',
+//               },
+//               body: json.encode(payload)));
+
+//         if (response.statusCode != 200) {
+//             setState(() {
+//              likeStatus ? _post!['likes']++ :_post!['likes']--;
+//               _post!['actions'].add({
+//                 'id': actionId,               
+//                 'user': userId,
+//                 'like': !likeStatus,
+//               });
+//             });
+//             print('Failed to toggle like: ${response.statusCode}');
+//           } else {
+//             await _fetchPostDetail();
+//             await _checkUserExists();
+//           }
+
+//   } catch(e) {
+//     print('Error toggling like: $e');
+//   }
+// }
+Future<void> _toggleLike() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  token = prefs.getString('token') ?? '';
+  
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    bool userExists = false;
+    bool likeStatus = false;
+    String? actionId;
+
+    // Check if the user already liked the post
+    for (var action in _post!['actions']) {
+      if (action['user'] == userId) {
+        userExists = true;
+        likeStatus = action['like'];
+        actionId = action['id'].toString();
+        break;
+      }
+    }
+
+    // Toggle the like status
+    likeStatus = !likeStatus;
+
+    // Update the likes count in the state
+    setState(() {
+      likeStatus ? _post!['likes']++ : _post!['likes']--;
+
+      if (userExists) {
+        // Update existing action
+        for (var action in _post!['actions']) {
+          if (action['user'] == userId) {
+            action['like'] = likeStatus;
+            break;
+          }
+        }
+      } else {
+        // Add new action
+        _post!['actions'].add({
+          'id': actionId,
+          'user': userId,
+          'like': likeStatus,
+        });
+      }
+    });
+
+    // Prepare the payload for the API request
+    final payload = {
+      'like': likeStatus,
+      'post': _post!['id'],
+      'user': userId,
+    };
+
+    final requestType = userExists ? 'patch' : 'post';
+    final url = userExists
+        ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+        : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+
+    // Make the API request
+    final response = await (requestType == 'patch'
+        ? http.patch(Uri.parse(url),
+            headers: {
+              'Authorization': 'Token $token',
+              'Content-type': 'application/json',
+            },
+            body: json.encode(payload))
+        : http.post(Uri.parse(url),
+            headers: {
+              'Authorization': 'Token $token',
+              'Content-type': 'application/json',
+            },
+            body: json.encode(payload)));
+
+    if (response.statusCode != 200) {
+      // Revert the like status if the request fails
+      setState(() {
+        likeStatus ? _post!['likes']-- : _post!['likes']++;
+        if (userExists) {
+          // Revert existing action
+          for (var action in _post!['actions']) {
+            if (action['user'] == userId) {
+              action['like'] = !likeStatus;
+              break;
+            }
+          }
+        } else {
+          // Remove added action
+          _post!['actions'].removeLast();
+        }
+      });
+      print('Failed to toggle like: ${response.statusCode}');
+    } else {
+      await _fetchPostDetail();
+      await _checkUserExists();
+    }
+  } catch (e) {
+    print('Error toggling like: $e');
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
+
+
+
+Future<void> _toggleLike1() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token') ?? '';
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      bool currentLikeStatus = false;
+      String? actionId;
+
+      for (var action in _post!['actions']) {
+        var track = json.decode(action['track']);
+        if (track['user'] == userId) {
+          // print(userExists);
+          currentLikeStatus = track['like'];
+          actionId = action['id'].toString();
+          break;
+        }
+      }
+
+      setState(() {
+        if (currentLikeStatus) {
+          _post!['likes']--;
+        } else {
+          _post!['likes']++;
+        }
+
+        _post!['actions'].removeWhere((action) {
+          var track = json.decode(action['track']);
+          return track['user'] == userId;
+        });
+
+        _post!['actions'].add({
+          'id': actionId,
+          'track': json.encode({
+            'user': userId,
+            'like': !currentLikeStatus,
+          }),
+        });
+      });
+
+      final payload = {
+        'like': !currentLikeStatus,
+        'post': _post!['id'],
+        'user': userId,
+      };
+
+      final requestType = actionId != null ? 'patch' : 'post';
+      final url = actionId != null
+          ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+          : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+
+      final response = await (requestType == 'patch'
+          ? http.patch(Uri.parse(url),
+              headers: {
+                'Authorization': 'Token $token',
+                'Content-type': 'application/json',
+              },
+              body: json.encode(payload))
+          : http.post(Uri.parse(url),
+              headers: {
+                'Authorization': 'Token $token',
+                'Content-type': 'application/json',
+              },
+              body: json.encode(payload)));
+
+      if (response.statusCode != 200) {
+        setState(() {
+          if (currentLikeStatus) {
+            _post!['likes']++;
+          } else {
+            _post!['likes']--;
+          }
+
+          _post!['actions'].removeWhere((action) {
+            var track = json.decode(action['track']);
+            return track['user'] == userId;
+          });
+          _post!['actions'].add({
+            'id': actionId,
+            'track': json.encode({
+              'user': userId,
+              'like': currentLikeStatus,
+            }),
+          });
+        });
+        print('Failed to toggle like: ${response.statusCode}');
+      } else {
+        await _fetchPostDetail();
+        await _checkUserExists();
+      }
+    } catch (e) {
+      setState(() {
+        if (currentLikeStatus) {
+          _post!['likes']++;
+        } else {
+          _post!['likes']--;
+        }
+
+        _post!['actions'].removeWhere((action) {
+          var track = json.decode(action['track']);
+          return track['user'] == userId;
+        });
+        _post!['actions'].add({
+          'id': actionId,
+          'track': json.encode({
+            'user': userId,
+            'like': currentLikeStatus,
+          }),
+        });
+      });
+      print('Error toggling like: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -290,7 +618,6 @@ Future<void> _addComment(String comment) async {
     return DateFormat('MMM dd, yyyy').format(dateTime);
   }
 
-
   Future<void> _translateData(String languageCode) async {
     setState(() {
       _isTranslating = true;
@@ -398,7 +725,6 @@ Future<void> _addComment(String comment) async {
     if (language == 'English') {
       setState(() {
         _reverseTranslation();
-        // _translateData("en");
         isTranslated==false;
       });
       
@@ -936,6 +1262,26 @@ Future<void> _addComment(String comment) async {
                         ),
                       ),
                       Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              onPressed: _toggleLike,                       
+                              icon: _post!['actions'].any((action) =>
+                                          action['user'] == userId &&
+                                          action['like'] == true)
+                                      ? const Icon(Icons.thumb_up, color: Colors.blue)
+                                      : const Icon(Icons.thumb_up_alt_outlined, color: Colors.blue),
+                              // icon: !likeStatus 
+                              //   ? const Icon(Icons.thumb_up, color: Colors.blue) 
+                              //   :const Icon(Icons.thumb_up_alt_outlined, color: Colors.blue),
+                            ),
+                            Text(_post!['likes'].toString() , style: const TextStyle(color: Colors.blue , fontWeight: FontWeight.bold),),
+                          ],
+                        )
+                      ),
+
+                      Padding(
                           padding: const EdgeInsets.all(20.0),
                           child: Text(
                             isTranslated ? translatedPostContent : parsedData,
@@ -988,210 +1334,510 @@ Future<void> _addComment(String comment) async {
 
 
 
-//using only Batch processing
-//   Future<void> _translateData() async {
+// Future<void> _toggleLike() async {
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   token = prefs.getString('token') ?? '';
+
+//   setState(() {
+//     _isLoading = true;
+//   });
+
 //   try {
-//     final translations = await Future.wait([
-//       translator.translate(postTitle, to: 'hi'),
-//       translator.translate(parsedData, to: 'hi'),
-//       translator.translate('Author: ${_post!['authors']['display']}', to: 'hi'),
-//       translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}', to: 'hi'),
-//       translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}', to: 'hi'),
-//       translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi'),
-//       translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi'),
-//       translator.translate(text, to: 'hi'),
-//       translator.translate('Reply', to: 'hi'),
-//       translator.translate('Hide', to: 'hi'),
-//       translator.translate('Show all replies', to: 'hi'),
-//       translator.translate('Add a new comment', to: 'hi'),
-//       translator.translate('Reply to comment', to: 'hi'),
-//     ]);
-
-//     final List<Map<String, dynamic>> translatedComments = [];
-
-//     for (var comment in _comments) {
-//       var translatedUsername = await translator.translate(comment['users']['username'], to: 'hi');
-//       var translatedContent = await translator.translate(comment['content'], to: 'hi');
-
-//       List<Map<String, dynamic>> translatedReplies = [];
-//       for (var reply in comment['replies']) {
-//         var translatedReplyUsername = await translator.translate(reply['users']['username'], to: 'hi');
-//         var translatedReplyContent = await translator.translate(reply['content'], to: 'hi');
-//         translatedReplies.add({
-//           'users': {'username': translatedReplyUsername.text},
-//           'content': translatedReplyContent.text,
-//         });
-//       }
-
-//       translatedComments.add({
-//         'id': comment['id'],
-//         'users': {'username': translatedUsername.text},
-//         'content': translatedContent.text,
-//         'replies': translatedReplies,
-//       });
-//     }
+//     bool currentLikeStatus = _post!['actions']
+//         .any((action) => action['user'] == userId && action['like'] == true);
 
 //     setState(() {
-//       isTranslated = true;
-//       translatedPostTitle = translations[0].text;
-//       translatedPostContent = translations[1].text;
-//       translatedPostAuthor = translations[2].text;
-//       translatedPostCDate = translations[3].text;
-//       translatedPostPDate = translations[4].text;
-//       translatedTags = translations[5].text;
-//       translatedCategory = translations[6].text;
-//       translatedButton = translations[7].text;
-//       translatedReplyTextButton = translations[8].text;
-//       translatedHideReplies = translations[9].text;
-//       translatedShowReplies = translations[10].text;
-//       translatedNewComment = translations[11].text;
-//       translatedReplyComment = translations[12].text;
-//       translatedCommentsList = translatedComments;
-//     });
-//   } catch (e) {
-//     print('Error translating data: $e');
-//   }
-// }
-
-
-
-// parallel requests 
-//   Future<void> _translateData() async {
-//   try {
-//     final List<Future<String>> translationFutures = [];
-
-//     // Translate static content
-//     translationFutures.addAll([
-//       translator.translate(postTitle, to: 'hi').then((value) => value.text),
-//       translator.translate(parsedData, to: 'hi').then((value) => value.text),
-//       translator.translate('Author: ${_post!['authors']['display']}', to: 'hi').then((value) => value.text),
-//       translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}', to: 'hi').then((value) => value.text),
-//       translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}', to: 'hi').then((value) => value.text),
-//       translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi').then((value) => value.text),
-//       translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi').then((value) => value.text),
-//       translator.translate(text, to: 'hi').then((value) => value.text),
-//       translator.translate('Reply', to: 'hi').then((value) => value.text),
-//       translator.translate('Hide', to: 'hi').then((value) => value.text),
-//       translator.translate('Show all replies', to: 'hi').then((value) => value.text),
-//       translator.translate('Add a new comment', to: 'hi').then((value) => value.text),
-//       translator.translate('Reply to comment', to: 'hi').then((value) => value.text),
-//     ]);
-
-//     // Translate comments and replies
-//     final List<Map<String, dynamic>> translatedComments = [];
-//     for (var comment in _comments) {
-//       translationFutures.add(translator.translate(comment['users']['username'], to: 'hi').then((value) => value.text));
-//       translationFutures.add(translator.translate(comment['content'], to: 'hi').then((value) => value.text));
-
-//       List<Future<Map<String, dynamic>>> replyFutures = [];
-//       for (var reply in comment['replies']) {
-//         replyFutures.add(translator.translate(reply['users']['username'], to: 'hi').then((value) => value.text)
-//             .then((translatedReplyUsername) => translator.translate(reply['content'], to: 'hi').then((value) => value.text)
-//             .then((translatedReplyContent) => ({
-//                 'users': {'username': translatedReplyUsername},
-//                 'content': translatedReplyContent,
-//               }),
-//             ),
-//           ),
-//         );
+//       if (currentLikeStatus) {
+//         _post!['likes']--;
+//       } else {
+//         _post!['likes']++;
 //       }
-
-//       // Wait for all replies to be translated before adding them to the comment
-//       List<Map<String, dynamic>> translatedReplies = await Future.wait(replyFutures);
-//       translatedComments.add({
-//         'id': comment['id'],
-//         'users': {'username': await translationFutures[translationFutures.length - 2]},
-//         'content': await translationFutures[translationFutures.length - 1],
-//         'replies': translatedReplies,
-//       });
-//     }
-
-//     // Wait for all translations to complete
-//     List<String> translations = await Future.wait(translationFutures);
-
-//     setState(() {
-//       isTranslated = true;
-//       translatedPostTitle = translations[0];
-//       translatedPostContent = translations[1];
-//       translatedPostAuthor = translations[2];
-//       translatedPostCDate = translations[3];
-//       translatedPostPDate = translations[4];
-//       translatedTags = translations[5];
-//       translatedCategory = translations[6];
-//       translatedButton = translations[7];
-//       translatedReplyTextButton = translations[8];
-//       translatedHideReplies = translations[9];
-//       translatedShowReplies = translations[10];
-//       translatedNewComment = translations[11];
-//       translatedReplyComment = translations[12];
-//       translatedCommentsList = translatedComments;
+//       _post!['actions'].removeWhere((action) => action['user'] == userId);
+//       _post!['actions'].add({'user': userId, 'like': !currentLikeStatus});
 //     });
-//   } catch (e) {
-//     print('Error translating data: $e');
-//   }
-// }
 
+//     final payload = {
+//       'like': !currentLikeStatus,
+//       'post': _post!['id'],
+//       'user': userId.toString(),
+//     };
 
-//simplest 
+    // int? actionId;
+    // print(userId);
+    // for (var action in _post!['actions']) {
+    //   // actionId = action['id'];
+    //   if (action['user'] == userId) {
+    //     actionId = action['id'];
+    //     break;
+    //   }
+    // }
+    
+    // print('Action ID: $actionId'); 
 
-  //   Future<void> _translateData() async {
-  //   try {
-  //     var titleTranslate = await translator.translate(postTitle, to: 'hi');
-  //     var contentTranslate = await translator.translate(parsedData, to: 'hi');
-  //     var authorTranslate = await translator.translate('Author: ${_post!['authors']['display']}' , to: 'hi');
-  //     var createdDate = await translator.translate('Created Date: ${_formatDate(_post!['timestamp'])}' , to: 'hi');
-  //     var publishedDate = await translator.translate('Published Date: ${_formatDate(_post!['utimestamp'])}' , to: 'hi');
-  //     var tagsTranslate = await translator.translate('Tags: ${_getTagTitles(_post!['tag'])}', to: 'hi');
-  //     var categoryTranslate = await translator.translate('Category: ${_categoryMap[_post!['category']]}', to: 'hi');
-  //     var commentButton = await translator.translate(text , to: 'hi');
-  //     var replyTextButton = await translator.translate('Reply', to: 'hi');
-  //     var hideReplies = await translator.translate('Hide', to: 'hi');
-  //     var showReplies = await translator.translate('Show all replies' , to: 'hi');
-  //     var newComment = await translator.translate('Add a new comment' , to: 'hi');
-  //     var replyComment = await translator.translate('Reply to comment' , to: 'hi');
+  //   final requestType = actionId != null ? 'patch' : 'post';
+  //   final url = actionId != null
+  //       ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+  //       :'https://test.securitytroops.in/stapi/v1/blogs/action/';
 
-  //     List<Map<String, dynamic>> translatedComments = [];
-  //     for (var comment in _comments) {
-  //       var translatedUsername = await translator.translate(comment['users']['username'], to: 'hi');
-  //       var translatedContent = await translator.translate(comment['content'], to: 'hi');
+  //   final response = await (requestType == 'patch'
+  //       ? http.patch(Uri.parse(url),
+  //           headers: {
+  //             'Authorization': 'Token $token',
+  //             'Content-type': 'application/json',
+  //           },
+  //           body: json.encode(payload)
+  //           )
+  //       : http.post(Uri.parse(url),
+  //           headers: {
+  //             'Authorization': 'Token $token',
+  //             'Content-type': 'application/json',
+  //           },
+  //           body: json.encode(payload)
+  //           ));
 
-  //       List<Map<String, dynamic>> translatedReplies = [];
-  //       for (var reply in comment['replies']) {
-  //         var translatedReplyUsername = await translator.translate(reply['users']['username'], to: 'hi');
-  //         var translatedReplyContent = await translator.translate(reply['content'], to: 'hi');
-  //         translatedReplies.add({
-  //           'users': {'username': translatedReplyUsername.text},
-  //           'content': translatedReplyContent.text,
-  //         });
-  //       }
-
-  //       translatedComments.add({
-  //         'id' : comment['id'],
-  //         'users': {'username': translatedUsername.text},
-  //         'content': translatedContent.text,
-  //         'replies': translatedReplies,
-  //       });
-  //     }
-
+  //   if (response.statusCode == 201) {
   //     setState(() {
-  //       isTranslated = true;
-  //       translatedPostTitle = titleTranslate.text;
-  //       translatedPostContent = contentTranslate.text;
-  //       translatedPostAuthor = authorTranslate.text;
-  //       translatedPostCDate = createdDate.text;
-  //       translatedPostPDate = publishedDate.text;
-  //       translatedTags = tagsTranslate.text;
-  //       translatedCategory = categoryTranslate.text;
-  //       translatedButton = commentButton.text;
-  //       translatedCommentsList = translatedComments;
-  //       translatedReplyTextButton = replyTextButton.text;
-  //       translatedHideReplies = hideReplies.text;
-  //       translatedShowReplies = showReplies.text;
-  //       translatedNewComment = newComment.text;
-  //       translatedReplyComment = replyComment.text;
-
+  //       print(currentLikeStatus);
+  //       if (currentLikeStatus) {
+  //         _post!['likes']++;
+  //       } else {
+  //         _post!['likes']--;
+  //       }
+  //       _post!['actions'].removeWhere((action) => action['user'] == userId);
+  //       _post!['actions'].add({'user': userId, 'like': currentLikeStatus});
   //     });
-  //   } catch (e) {
-  //     print('Error translating title: $e');
+  //     print('Failed to toggle like: ${response.statusCode}');
+  //   } else {
+  //     await _fetchPostDetail();
+  //     await _checkUserExists();
   //   }
-  // }
+  // } catch (e) {
+  //   setState(() {
+  //     if (currentLikeStatus) {
+  //       _post!['likes']++;
+  //     } else {
+  //       _post!['likes']--;
+  //     }
+  //     _post!['actions'].removeWhere((action) => action['user'] == userId);
+  //     _post!['actions'].add({'user': userId, 'like': currentLikeStatus});
+  //   });
+  //   print('Error toggling like: $e');
+  // } finally {
+  //   setState(() {
+  //     _isLoading = false;
+  //   });
+//   } catch(e) {}
+// }
+
+// Future<void> _toggleLike() async {
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   token = prefs.getString('token') ?? '';
+//   setState(() {
+//     _isLoading = true;
+//   });
+
+//   try {
+//     bool currentLikeStatus = false;
+//     String? actionId;
+
+//     // Find the current like status and actionId
+//     for (var action in _post!['actions']) {
+//       var track = json.decode(action['track']);
+//       if (track['user'] == userId) {
+//         currentLikeStatus = track['like'];
+//         actionId = action['id'].toString();
+//         break;
+//       }
+//     }
+
+//     setState(() {
+//       // Optimistically update the UI
+//       if (currentLikeStatus) {
+//         _post!['likes']--; 
+//       } else {
+//         _post!['likes']++; 
+//       }
+
+//       // Remove the current action
+//       _post!['actions'].removeWhere((action) {
+//         var track = json.decode(action['track']);
+//         return track['user'] == userId;
+//       });
+
+//       // Add new action or update existing action
+//       _post!['actions'].add({
+//         'id': actionId,
+//         'track': json.encode({
+//           'user': userId,
+//           'like': !currentLikeStatus,
+//         }),
+//       });
+//     });
+
+//     final payload = {
+//       'like': !currentLikeStatus,
+//       'post': _post!['id'],
+//       'user': userId,
+//     };
+
+//     final requestType = actionId != null ? 'patch' : 'post';
+//     final url = actionId != null
+//         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+//         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+
+//     final response = await (requestType == 'patch'
+//         ? http.patch(Uri.parse(url),
+//             headers: {
+//               'Authorization': 'Token $token',
+//               'Content-type': 'application/json',
+//             },
+//             body: json.encode(payload))
+//         : http.post(Uri.parse(url),
+//             headers: {
+//               'Authorization': 'Token $token',
+//               'Content-type': 'application/json',
+//             },
+//             body: json.encode(payload)));
+
+//     if (response.statusCode != 200) {
+//       setState(() {
+//         if (currentLikeStatus) {
+//           _post!['likes']++;
+//         } else {
+//           _post!['likes']--;
+//         }
+
+//         _post!['actions'].removeWhere((action) {
+//           var track = json.decode(action['track']);
+//           return track['user'] == userId;
+//         });
+//         _post!['actions'].add({
+//           'id': actionId,
+//           'track': json.encode({
+//             'user': userId,
+//             'like': currentLikeStatus,
+//           }),
+//         });
+//       });
+//       print('Failed to toggle like: ${response.statusCode}');
+//     } else {
+//       await _fetchPostDetail();
+//       await _checkUserExists();
+//     }
+//   } catch (e) {
+//     setState(() {
+//       if (currentLikeStatus) {
+//         _post!['likes']++;
+//       } else {
+//         _post!['likes']--;
+//       }
+
+//       _post!['actions'].removeWhere((action) {
+//         var track = json.decode(action['track']);
+//         return track['user'] == userId;
+//       });
+//       _post!['actions'].add({
+//         'id': actionId,
+//         'track': json.encode({
+//           'user': userId,
+//           'like': currentLikeStatus,
+//         }),
+//       });
+//     });
+//     print('Error toggling like: $e');
+//   } finally {
+//     setState(() {
+//       _isLoading = false;
+//     });
+//   }
+// }
+// Future<void> _toggleLike() async {
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   token = prefs.getString('token') ?? '';
+//   setState(() {
+//     _isLoading = true;
+//   });
+
+//   try {
+//     bool currentLikeStatus = false;
+//     String? actionId;
+
+//     for (var action in _post!['actions']) {
+//       var track = json.decode(action['track']);
+//       if (track['user'] == userId) {
+//         currentLikeStatus = track['like'];
+//         actionId = action['id'].toString();
+//         break;
+//       }
+//     }
+
+//     setState(() {
+//       if (currentLikeStatus) {
+//         _post!['likes']--; 
+//       } else {
+//         _post!['likes']++; 
+//       }
+
+//       // _post!['actions'].removeWhere((action) {
+//       //   var track = json.decode(action['track']);
+//       //   return track['user'] == userId;
+//       // });
+
+//       _post!['actions'].add({
+//         'id': actionId,
+//         'track': json.encode({
+//           'user': userId,
+//           'like': !currentLikeStatus,
+//         }),
+//       });
+//     });
+
+//     final payload = {
+//       'like': !currentLikeStatus,
+//       'post': _post!['id'],
+//       'user': userId,
+//     };
+
+//     final requestType = actionId != null ? 'patch' : 'post';
+//     final url = actionId != null
+//         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+//         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+
+//     final response = await (requestType == 'patch'
+//         ? http.patch(Uri.parse(url),
+//             headers: {
+//               'Authorization': 'Token $token',
+//               'Content-type': 'application/json',
+//             },
+//             body: json.encode(payload))
+//         : http.post(Uri.parse(url),
+//             headers: {
+//               'Authorization': 'Token $token',
+//               'Content-type': 'application/json',
+//             },
+//             body: json.encode(payload)));
+
+//     if (response.statusCode != 200) {
+//       setState(() {
+//         // Revert the optimistic UI update
+//         if (currentLikeStatus) {
+//           _post!['likes']++;
+//         } else {
+//           _post!['likes']--;
+//         }
+
+//         _post!['actions'].removeWhere((action) {
+//           var track = json.decode(action['track']);
+//           return track['user'] == userId;
+//         });
+//         _post!['actions'].add({
+//           'id': actionId,
+//           'track': json.encode({
+//             'user': userId,
+//             'like': currentLikeStatus,
+//           }),
+//         });
+//       });
+//       print('Failed to toggle like: ${response.statusCode}');
+//     } else {
+//       await _fetchPostDetail();
+//       await _checkUserExists();
+//     }
+
+//   } catch (e) {
+//     setState(() {
+//       if (currentLikeStatus) {
+//         _post!['likes']++;
+//       } else {
+//         _post!['likes']--;
+//       }
+
+//       _post!['actions'].removeWhere((action) {
+//         var track = json.decode(action['track']);
+//         return track['user'] == userId;
+//       });
+//       _post!['actions'].add({
+//         'id': actionId,
+//         'track': json.encode({
+//           'user': userId,
+//           'like': currentLikeStatus,
+//         }),
+//       });
+//     });
+//     print('Error toggling like: $e');
+//   } finally {
+//     setState(() {
+//       _isLoading = false;
+//     });
+//   }
+// }
+
+
+
+// Future<void> _reverseLike() async {
+//   try {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     String token = prefs.getString('token') ?? '';
+
+//     // Find the current action ID
+//     String? actionId;
+//     for (var action in _post!['actions']) {
+//       var track = json.decode(action['track']);
+//       if (track['user'] == userId) {
+//         actionId = action['id'].toString();
+//         break;
+//       }
+//     }
+
+//     if (actionId != null) {
+//       final url = 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/';
+//       final payload = {
+//         'like': true, 
+//         'post': _post!['id'],
+//         'user': userId,
+//       };
+
+//       final response = await http.patch(Uri.parse(url),
+//           headers: {
+//             'Authorization': 'Token $token',
+//             'Content-type': 'application/json',
+//           },
+//           body: json.encode(payload));
+
+//       if (response.statusCode == 200) {
+//         setState(() {
+//           // Update the action in _post with the reversed like status
+//           _post!['actions'].removeWhere((action) {
+//             var track = json.decode(action['track']);
+//             return track['user'] == userId;
+//           });
+
+//           _post!['actions'].add({
+//             'id': actionId,
+//             'track': json.encode({
+//               'user': userId,
+//               'like': true,
+//             }),
+//           });
+//         });
+//       } else {
+//         print('Failed to reverse like: ${response.statusCode}');
+//       }
+//     }
+//   } catch (e) {
+//     print('Error reversing like: $e');
+//   }
+// }
+
+
+// Future<void> _toggleLike() async {
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   token = prefs.getString('token') ?? '';
+//   setState(() {
+//     _isLoading = true;
+//   });
+
+//   try {
+//     for (var action in _post!['actions']) {
+//       var track = json.decode(action['track']);
+//       if (track['user'] == userId) {
+//         currentLikeStatus = track['like'];
+//         actionId = action['id'].toString();
+//         break;
+//       }
+//     }
+//     setState(() {
+//       currentLikeStatus
+//         ?_post!['likes']-- 
+//         :_post!['likes']++;
+      
+//       _post!['actions'].removeWhere((action) {
+//         var track = json.decode(action['track']);
+//         return track['user'] == userId;
+//       });
+//       _post!['actions'].add({
+//         'id': actionId,
+//         'track': json.encode({
+//           'user': userId,
+//           'like': !currentLikeStatus,
+//         }),
+//       });
+//     });
+
+//     final payload = {
+//       'like': !currentLikeStatus,
+//       'post': _post!['id'],
+//       'user': userId,
+//     };
+
+//     final requestType = actionId != null ? 'patch' : 'post';
+//     final url = actionId != null
+//         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
+//         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+
+//     final response = await (requestType == 'patch'
+//         ? http.patch(Uri.parse(url),
+//             headers: {
+//               'Authorization': 'Token $token',
+//               'Content-type': 'application/json',
+//             },
+//             body: json.encode(payload))
+//         : http.post(Uri.parse(url),
+//             headers: {
+//               'Authorization': 'Token $token',
+//               'Content-type': 'application/json',
+//             },
+//             body: json.encode(payload)));
+
+//     if (response.statusCode != 200) {
+//       setState(() {
+//         if (currentLikeStatus) {
+//           _post!['likes']++;
+//         } else {
+//           _post!['likes']--;
+//         }
+//         _post!['actions'].removeWhere((action) {
+//           var track = json.decode(action['track']);
+//           return track['user'] == userId;
+//         });
+//         _post!['actions'].add({
+//           'id': actionId,
+//           'track': json.encode({
+//             'user': userId,
+//             'like': currentLikeStatus,
+//           }),
+//         });
+//       });
+//       print('Failed to toggle like: ${response.statusCode}');
+//     } else {
+//       await _fetchPostDetail();
+//       await _checkUserExists();
+//     }
+//   } catch (e) {    
+//     setState(() {
+//       if (currentLikeStatus) {
+//         _post!['likes']++;
+//       } else {
+//         _post!['likes']--;
+//       }
+//       _post!['actions'].removeWhere((action) {
+//         var track = json.decode(action['track']);
+//         return track['user'] == userId;
+//       });
+//       _post!['actions'].add({
+//         'id': actionId,
+//         'track': json.encode({
+//           'user': userId,
+//           'like': currentLikeStatus,
+//         }),
+//       });
+//     });
+//     print('Error toggling like: $e');
+//   } finally {
+//     setState(() {
+//       _isLoading = false;
+//     });
+//   }
+// }
+
+

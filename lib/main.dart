@@ -147,7 +147,7 @@ class _MainPageState extends State<MainPage> {
                         children: [
                           Text(
                             userdata['username'] ?? 'Username',
-                            style: const TextStyle(color: Colors.white, fontSize: 18 , fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: Colors.white, fontSize: 14 , fontWeight: FontWeight.bold),
                           ),
                           Text(
                             userdata['email'] ?? 'Email',
