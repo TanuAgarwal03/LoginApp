@@ -32,9 +32,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   var profile;
   bool p_image = false;
   bool _isLoading = true;
-  String _errorMessage = '';
   bool _isMarried = false;
-  // String? _isMarried;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -128,7 +126,6 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     } catch (e) {
       print('Error loading countries: $e');
       setState(() {
-        _errorMessage = 'Failed to load countries';
       });
     } finally {
       setState(() {
@@ -163,7 +160,6 @@ Future<void> _fetchStates(int countryId) async {
   } catch (e) {
     print('Error loading states: $e');
     setState(() {
-      _errorMessage = 'Failed to load states';
     });
   } finally {
     setState(() {

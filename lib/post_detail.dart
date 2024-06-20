@@ -1,7 +1,4 @@
-import 'dart:js_interop';
-
 import 'package:flutter/material.dart';
-// import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
@@ -13,8 +10,10 @@ import 'package:html/dom.dart' as dom;
 class PostDetailPage extends StatefulWidget {
   final String slug;
   final String postTitle;
+  final Function onLikeToggle; 
+  // final VoidCallback refreshBlogList;
   const PostDetailPage(
-      {super.key, required this.slug, required this.postTitle});
+      {super.key, required this.slug, required this.postTitle, required this.onLikeToggle});
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -56,16 +55,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String translatedReplyComment = '';
   List<Map<String, dynamic>> translatedCommentsList = [];
   bool isTranslated = false;
-
-  // Map<int, Map<String, dynamic>> _likedUsersMap = {};
-  List<dynamic> _actions = [];
   bool userExists = false;
-  bool currentLikeStatus = false;
   String? actionId;
-
-
   bool likeStatus = false;
-
   bool _isTranslating = false;
   @override
   void initState() {
@@ -85,8 +77,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
     mobile = prefs.getInt('mobile') ?? 0;
     userId = prefs.getInt('id') ?? 0;
     imageUrl = prefs.getString('image') ?? '';
-
-    // await _fetchPostDetail(); // Fetch post details first
     await _checkUserExists(); // Check if user exists in post's actions
   }
 
@@ -117,6 +107,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
           _translateData("en");
           _isLoading = false;
         });
+        // widget.refreshBlogList();
       } else {
         setState(() {
           _isLoading = false;
@@ -143,110 +134,35 @@ class _PostDetailPageState extends State<PostDetailPage> {
   }
 }
 
-// Future<void> _toggleLike() async {
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   token = prefs.getString('token') ?? '';
-  
-//   setState(() {
-//     _isLoading = true;
-//   });
-
-//   try {
-//     for (var action in _post!['actions']) {
-//       if (!userExists) {
-//         // print(userExists);
-//         likeStatus = action['like'];
-//         actionId = action['id'].toString();
-//         break;
-//       }
-//     }
-//     setState(() {
-//       print('Like status : ${!likeStatus}');
-//       likeStatus ? _post!['likes']-- : _post!['likes']++;
-
-//       _post!['actions'].add({
-//         'id' : actionId,
-//         'user' : userId,
-//         'like' : !likeStatus,
-//       });     
-//     });
-
-//     final payload = {
-//         'like': !likeStatus,
-//         'post': _post!['id'],
-//         'user': userId,
-//       };
-
-//     final requestType = actionId != null ? 'patch' : 'post';
-//     final url = actionId != null
-//           ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-//           : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
-
-//     final response = await (requestType == 'patch'
-//           ? http.patch(Uri.parse(url),
-//               headers: {
-//                 'Authorization': 'Token $token',
-//                 'Content-type': 'application/json',
-//               },
-//               body: json.encode(payload))
-//           : http.post(Uri.parse(url),
-//               headers: {
-//                 'Authorization': 'Token $token',
-//                 'Content-type': 'application/json',
-//               },
-//               body: json.encode(payload)));
-
-//         if (response.statusCode != 200) {
-//             setState(() {
-//              likeStatus ? _post!['likes']++ :_post!['likes']--;
-//               _post!['actions'].add({
-//                 'id': actionId,               
-//                 'user': userId,
-//                 'like': !likeStatus,
-//               });
-//             });
-//             print('Failed to toggle like: ${response.statusCode}');
-//           } else {
-//             await _fetchPostDetail();
-//             await _checkUserExists();
-//           }
-
-//   } catch(e) {
-//     print('Error toggling like: $e');
-//   }
-// }
 Future<void> _toggleLike() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   token = prefs.getString('token') ?? '';
   
-  setState(() {
-    _isLoading = true;
-  });
+  // setState(() {
+  //   _isLoading = true;
+  // });
 
   try {
     bool userExists = false;
     bool likeStatus = false;
     String? actionId;
 
-    // Check if the user already liked the post
     for (var action in _post!['actions']) {
       if (action['user'] == userId) {
         userExists = true;
         likeStatus = action['like'];
         actionId = action['id'].toString();
+        // print('userId : $userId');
+        // print('User Exists : ${userExists}');
+        // print('Like Status : ${!likeStatus}');
         break;
       }
     }
-
-    // Toggle the like status
     likeStatus = !likeStatus;
-
-    // Update the likes count in the state
     setState(() {
       likeStatus ? _post!['likes']++ : _post!['likes']--;
 
       if (userExists) {
-        // Update existing action
         for (var action in _post!['actions']) {
           if (action['user'] == userId) {
             action['like'] = likeStatus;
@@ -254,7 +170,6 @@ Future<void> _toggleLike() async {
           }
         }
       } else {
-        // Add new action
         _post!['actions'].add({
           'id': actionId,
           'user': userId,
@@ -263,7 +178,6 @@ Future<void> _toggleLike() async {
       }
     });
 
-    // Prepare the payload for the API request
     final payload = {
       'like': likeStatus,
       'post': _post!['id'],
@@ -275,7 +189,6 @@ Future<void> _toggleLike() async {
         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
 
-    // Make the API request
     final response = await (requestType == 'patch'
         ? http.patch(Uri.parse(url),
             headers: {
@@ -291,11 +204,9 @@ Future<void> _toggleLike() async {
             body: json.encode(payload)));
 
     if (response.statusCode != 200) {
-      // Revert the like status if the request fails
       setState(() {
         likeStatus ? _post!['likes']-- : _post!['likes']++;
         if (userExists) {
-          // Revert existing action
           for (var action in _post!['actions']) {
             if (action['user'] == userId) {
               action['like'] = !likeStatus;
@@ -303,15 +214,14 @@ Future<void> _toggleLike() async {
             }
           }
         } else {
-          // Remove added action
           _post!['actions'].removeLast();
         }
       });
       print('Failed to toggle like: ${response.statusCode}');
     } else {
-      await _fetchPostDetail();
-      await _checkUserExists();
+      widget.onLikeToggle(_post!['id'], likeStatus, userExists);
     }
+    
   } catch (e) {
     print('Error toggling like: $e');
   } finally {
@@ -320,129 +230,6 @@ Future<void> _toggleLike() async {
     });
   }
 }
-
-
-
-Future<void> _toggleLike1() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token') ?? '';
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      bool currentLikeStatus = false;
-      String? actionId;
-
-      for (var action in _post!['actions']) {
-        var track = json.decode(action['track']);
-        if (track['user'] == userId) {
-          // print(userExists);
-          currentLikeStatus = track['like'];
-          actionId = action['id'].toString();
-          break;
-        }
-      }
-
-      setState(() {
-        if (currentLikeStatus) {
-          _post!['likes']--;
-        } else {
-          _post!['likes']++;
-        }
-
-        _post!['actions'].removeWhere((action) {
-          var track = json.decode(action['track']);
-          return track['user'] == userId;
-        });
-
-        _post!['actions'].add({
-          'id': actionId,
-          'track': json.encode({
-            'user': userId,
-            'like': !currentLikeStatus,
-          }),
-        });
-      });
-
-      final payload = {
-        'like': !currentLikeStatus,
-        'post': _post!['id'],
-        'user': userId,
-      };
-
-      final requestType = actionId != null ? 'patch' : 'post';
-      final url = actionId != null
-          ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-          : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
-
-      final response = await (requestType == 'patch'
-          ? http.patch(Uri.parse(url),
-              headers: {
-                'Authorization': 'Token $token',
-                'Content-type': 'application/json',
-              },
-              body: json.encode(payload))
-          : http.post(Uri.parse(url),
-              headers: {
-                'Authorization': 'Token $token',
-                'Content-type': 'application/json',
-              },
-              body: json.encode(payload)));
-
-      if (response.statusCode != 200) {
-        setState(() {
-          if (currentLikeStatus) {
-            _post!['likes']++;
-          } else {
-            _post!['likes']--;
-          }
-
-          _post!['actions'].removeWhere((action) {
-            var track = json.decode(action['track']);
-            return track['user'] == userId;
-          });
-          _post!['actions'].add({
-            'id': actionId,
-            'track': json.encode({
-              'user': userId,
-              'like': currentLikeStatus,
-            }),
-          });
-        });
-        print('Failed to toggle like: ${response.statusCode}');
-      } else {
-        await _fetchPostDetail();
-        await _checkUserExists();
-      }
-    } catch (e) {
-      setState(() {
-        if (currentLikeStatus) {
-          _post!['likes']++;
-        } else {
-          _post!['likes']--;
-        }
-
-        _post!['actions'].removeWhere((action) {
-          var track = json.decode(action['track']);
-          return track['user'] == userId;
-        });
-        _post!['actions'].add({
-          'id': actionId,
-          'track': json.encode({
-            'user': userId,
-            'like': currentLikeStatus,
-          }),
-        });
-      });
-      print('Error toggling like: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
 
   String parseDocument(dom.Document document) {
     List<String> elementsText = document.body!.children.map((element) {
@@ -1261,6 +1048,7 @@ Future<void> _addComment(String comment) async {
                               style: const TextStyle(color: Colors.white)),
                         ),
                       ),
+                      
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
@@ -1331,513 +1119,3 @@ Future<void> _addComment(String comment) async {
     }
   }
 }
-
-
-
-// Future<void> _toggleLike() async {
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   token = prefs.getString('token') ?? '';
-
-//   setState(() {
-//     _isLoading = true;
-//   });
-
-//   try {
-//     bool currentLikeStatus = _post!['actions']
-//         .any((action) => action['user'] == userId && action['like'] == true);
-
-//     setState(() {
-//       if (currentLikeStatus) {
-//         _post!['likes']--;
-//       } else {
-//         _post!['likes']++;
-//       }
-//       _post!['actions'].removeWhere((action) => action['user'] == userId);
-//       _post!['actions'].add({'user': userId, 'like': !currentLikeStatus});
-//     });
-
-//     final payload = {
-//       'like': !currentLikeStatus,
-//       'post': _post!['id'],
-//       'user': userId.toString(),
-//     };
-
-    // int? actionId;
-    // print(userId);
-    // for (var action in _post!['actions']) {
-    //   // actionId = action['id'];
-    //   if (action['user'] == userId) {
-    //     actionId = action['id'];
-    //     break;
-    //   }
-    // }
-    
-    // print('Action ID: $actionId'); 
-
-  //   final requestType = actionId != null ? 'patch' : 'post';
-  //   final url = actionId != null
-  //       ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-  //       :'https://test.securitytroops.in/stapi/v1/blogs/action/';
-
-  //   final response = await (requestType == 'patch'
-  //       ? http.patch(Uri.parse(url),
-  //           headers: {
-  //             'Authorization': 'Token $token',
-  //             'Content-type': 'application/json',
-  //           },
-  //           body: json.encode(payload)
-  //           )
-  //       : http.post(Uri.parse(url),
-  //           headers: {
-  //             'Authorization': 'Token $token',
-  //             'Content-type': 'application/json',
-  //           },
-  //           body: json.encode(payload)
-  //           ));
-
-  //   if (response.statusCode == 201) {
-  //     setState(() {
-  //       print(currentLikeStatus);
-  //       if (currentLikeStatus) {
-  //         _post!['likes']++;
-  //       } else {
-  //         _post!['likes']--;
-  //       }
-  //       _post!['actions'].removeWhere((action) => action['user'] == userId);
-  //       _post!['actions'].add({'user': userId, 'like': currentLikeStatus});
-  //     });
-  //     print('Failed to toggle like: ${response.statusCode}');
-  //   } else {
-  //     await _fetchPostDetail();
-  //     await _checkUserExists();
-  //   }
-  // } catch (e) {
-  //   setState(() {
-  //     if (currentLikeStatus) {
-  //       _post!['likes']++;
-  //     } else {
-  //       _post!['likes']--;
-  //     }
-  //     _post!['actions'].removeWhere((action) => action['user'] == userId);
-  //     _post!['actions'].add({'user': userId, 'like': currentLikeStatus});
-  //   });
-  //   print('Error toggling like: $e');
-  // } finally {
-  //   setState(() {
-  //     _isLoading = false;
-  //   });
-//   } catch(e) {}
-// }
-
-// Future<void> _toggleLike() async {
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   token = prefs.getString('token') ?? '';
-//   setState(() {
-//     _isLoading = true;
-//   });
-
-//   try {
-//     bool currentLikeStatus = false;
-//     String? actionId;
-
-//     // Find the current like status and actionId
-//     for (var action in _post!['actions']) {
-//       var track = json.decode(action['track']);
-//       if (track['user'] == userId) {
-//         currentLikeStatus = track['like'];
-//         actionId = action['id'].toString();
-//         break;
-//       }
-//     }
-
-//     setState(() {
-//       // Optimistically update the UI
-//       if (currentLikeStatus) {
-//         _post!['likes']--; 
-//       } else {
-//         _post!['likes']++; 
-//       }
-
-//       // Remove the current action
-//       _post!['actions'].removeWhere((action) {
-//         var track = json.decode(action['track']);
-//         return track['user'] == userId;
-//       });
-
-//       // Add new action or update existing action
-//       _post!['actions'].add({
-//         'id': actionId,
-//         'track': json.encode({
-//           'user': userId,
-//           'like': !currentLikeStatus,
-//         }),
-//       });
-//     });
-
-//     final payload = {
-//       'like': !currentLikeStatus,
-//       'post': _post!['id'],
-//       'user': userId,
-//     };
-
-//     final requestType = actionId != null ? 'patch' : 'post';
-//     final url = actionId != null
-//         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-//         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
-
-//     final response = await (requestType == 'patch'
-//         ? http.patch(Uri.parse(url),
-//             headers: {
-//               'Authorization': 'Token $token',
-//               'Content-type': 'application/json',
-//             },
-//             body: json.encode(payload))
-//         : http.post(Uri.parse(url),
-//             headers: {
-//               'Authorization': 'Token $token',
-//               'Content-type': 'application/json',
-//             },
-//             body: json.encode(payload)));
-
-//     if (response.statusCode != 200) {
-//       setState(() {
-//         if (currentLikeStatus) {
-//           _post!['likes']++;
-//         } else {
-//           _post!['likes']--;
-//         }
-
-//         _post!['actions'].removeWhere((action) {
-//           var track = json.decode(action['track']);
-//           return track['user'] == userId;
-//         });
-//         _post!['actions'].add({
-//           'id': actionId,
-//           'track': json.encode({
-//             'user': userId,
-//             'like': currentLikeStatus,
-//           }),
-//         });
-//       });
-//       print('Failed to toggle like: ${response.statusCode}');
-//     } else {
-//       await _fetchPostDetail();
-//       await _checkUserExists();
-//     }
-//   } catch (e) {
-//     setState(() {
-//       if (currentLikeStatus) {
-//         _post!['likes']++;
-//       } else {
-//         _post!['likes']--;
-//       }
-
-//       _post!['actions'].removeWhere((action) {
-//         var track = json.decode(action['track']);
-//         return track['user'] == userId;
-//       });
-//       _post!['actions'].add({
-//         'id': actionId,
-//         'track': json.encode({
-//           'user': userId,
-//           'like': currentLikeStatus,
-//         }),
-//       });
-//     });
-//     print('Error toggling like: $e');
-//   } finally {
-//     setState(() {
-//       _isLoading = false;
-//     });
-//   }
-// }
-// Future<void> _toggleLike() async {
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   token = prefs.getString('token') ?? '';
-//   setState(() {
-//     _isLoading = true;
-//   });
-
-//   try {
-//     bool currentLikeStatus = false;
-//     String? actionId;
-
-//     for (var action in _post!['actions']) {
-//       var track = json.decode(action['track']);
-//       if (track['user'] == userId) {
-//         currentLikeStatus = track['like'];
-//         actionId = action['id'].toString();
-//         break;
-//       }
-//     }
-
-//     setState(() {
-//       if (currentLikeStatus) {
-//         _post!['likes']--; 
-//       } else {
-//         _post!['likes']++; 
-//       }
-
-//       // _post!['actions'].removeWhere((action) {
-//       //   var track = json.decode(action['track']);
-//       //   return track['user'] == userId;
-//       // });
-
-//       _post!['actions'].add({
-//         'id': actionId,
-//         'track': json.encode({
-//           'user': userId,
-//           'like': !currentLikeStatus,
-//         }),
-//       });
-//     });
-
-//     final payload = {
-//       'like': !currentLikeStatus,
-//       'post': _post!['id'],
-//       'user': userId,
-//     };
-
-//     final requestType = actionId != null ? 'patch' : 'post';
-//     final url = actionId != null
-//         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-//         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
-
-//     final response = await (requestType == 'patch'
-//         ? http.patch(Uri.parse(url),
-//             headers: {
-//               'Authorization': 'Token $token',
-//               'Content-type': 'application/json',
-//             },
-//             body: json.encode(payload))
-//         : http.post(Uri.parse(url),
-//             headers: {
-//               'Authorization': 'Token $token',
-//               'Content-type': 'application/json',
-//             },
-//             body: json.encode(payload)));
-
-//     if (response.statusCode != 200) {
-//       setState(() {
-//         // Revert the optimistic UI update
-//         if (currentLikeStatus) {
-//           _post!['likes']++;
-//         } else {
-//           _post!['likes']--;
-//         }
-
-//         _post!['actions'].removeWhere((action) {
-//           var track = json.decode(action['track']);
-//           return track['user'] == userId;
-//         });
-//         _post!['actions'].add({
-//           'id': actionId,
-//           'track': json.encode({
-//             'user': userId,
-//             'like': currentLikeStatus,
-//           }),
-//         });
-//       });
-//       print('Failed to toggle like: ${response.statusCode}');
-//     } else {
-//       await _fetchPostDetail();
-//       await _checkUserExists();
-//     }
-
-//   } catch (e) {
-//     setState(() {
-//       if (currentLikeStatus) {
-//         _post!['likes']++;
-//       } else {
-//         _post!['likes']--;
-//       }
-
-//       _post!['actions'].removeWhere((action) {
-//         var track = json.decode(action['track']);
-//         return track['user'] == userId;
-//       });
-//       _post!['actions'].add({
-//         'id': actionId,
-//         'track': json.encode({
-//           'user': userId,
-//           'like': currentLikeStatus,
-//         }),
-//       });
-//     });
-//     print('Error toggling like: $e');
-//   } finally {
-//     setState(() {
-//       _isLoading = false;
-//     });
-//   }
-// }
-
-
-
-// Future<void> _reverseLike() async {
-//   try {
-//     SharedPreferences prefs = await SharedPreferences.getInstance();
-//     String token = prefs.getString('token') ?? '';
-
-//     // Find the current action ID
-//     String? actionId;
-//     for (var action in _post!['actions']) {
-//       var track = json.decode(action['track']);
-//       if (track['user'] == userId) {
-//         actionId = action['id'].toString();
-//         break;
-//       }
-//     }
-
-//     if (actionId != null) {
-//       final url = 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/';
-//       final payload = {
-//         'like': true, 
-//         'post': _post!['id'],
-//         'user': userId,
-//       };
-
-//       final response = await http.patch(Uri.parse(url),
-//           headers: {
-//             'Authorization': 'Token $token',
-//             'Content-type': 'application/json',
-//           },
-//           body: json.encode(payload));
-
-//       if (response.statusCode == 200) {
-//         setState(() {
-//           // Update the action in _post with the reversed like status
-//           _post!['actions'].removeWhere((action) {
-//             var track = json.decode(action['track']);
-//             return track['user'] == userId;
-//           });
-
-//           _post!['actions'].add({
-//             'id': actionId,
-//             'track': json.encode({
-//               'user': userId,
-//               'like': true,
-//             }),
-//           });
-//         });
-//       } else {
-//         print('Failed to reverse like: ${response.statusCode}');
-//       }
-//     }
-//   } catch (e) {
-//     print('Error reversing like: $e');
-//   }
-// }
-
-
-// Future<void> _toggleLike() async {
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   token = prefs.getString('token') ?? '';
-//   setState(() {
-//     _isLoading = true;
-//   });
-
-//   try {
-//     for (var action in _post!['actions']) {
-//       var track = json.decode(action['track']);
-//       if (track['user'] == userId) {
-//         currentLikeStatus = track['like'];
-//         actionId = action['id'].toString();
-//         break;
-//       }
-//     }
-//     setState(() {
-//       currentLikeStatus
-//         ?_post!['likes']-- 
-//         :_post!['likes']++;
-      
-//       _post!['actions'].removeWhere((action) {
-//         var track = json.decode(action['track']);
-//         return track['user'] == userId;
-//       });
-//       _post!['actions'].add({
-//         'id': actionId,
-//         'track': json.encode({
-//           'user': userId,
-//           'like': !currentLikeStatus,
-//         }),
-//       });
-//     });
-
-//     final payload = {
-//       'like': !currentLikeStatus,
-//       'post': _post!['id'],
-//       'user': userId,
-//     };
-
-//     final requestType = actionId != null ? 'patch' : 'post';
-//     final url = actionId != null
-//         ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-//         : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
-
-//     final response = await (requestType == 'patch'
-//         ? http.patch(Uri.parse(url),
-//             headers: {
-//               'Authorization': 'Token $token',
-//               'Content-type': 'application/json',
-//             },
-//             body: json.encode(payload))
-//         : http.post(Uri.parse(url),
-//             headers: {
-//               'Authorization': 'Token $token',
-//               'Content-type': 'application/json',
-//             },
-//             body: json.encode(payload)));
-
-//     if (response.statusCode != 200) {
-//       setState(() {
-//         if (currentLikeStatus) {
-//           _post!['likes']++;
-//         } else {
-//           _post!['likes']--;
-//         }
-//         _post!['actions'].removeWhere((action) {
-//           var track = json.decode(action['track']);
-//           return track['user'] == userId;
-//         });
-//         _post!['actions'].add({
-//           'id': actionId,
-//           'track': json.encode({
-//             'user': userId,
-//             'like': currentLikeStatus,
-//           }),
-//         });
-//       });
-//       print('Failed to toggle like: ${response.statusCode}');
-//     } else {
-//       await _fetchPostDetail();
-//       await _checkUserExists();
-//     }
-//   } catch (e) {    
-//     setState(() {
-//       if (currentLikeStatus) {
-//         _post!['likes']++;
-//       } else {
-//         _post!['likes']--;
-//       }
-//       _post!['actions'].removeWhere((action) {
-//         var track = json.decode(action['track']);
-//         return track['user'] == userId;
-//       });
-//       _post!['actions'].add({
-//         'id': actionId,
-//         'track': json.encode({
-//           'user': userId,
-//           'like': currentLikeStatus,
-//         }),
-//       });
-//     });
-//     print('Error toggling like: $e');
-//   } finally {
-//     setState(() {
-//       _isLoading = false;
-//     });
-//   }
-// }
-
-
