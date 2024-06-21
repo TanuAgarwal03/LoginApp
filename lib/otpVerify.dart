@@ -1,6 +1,7 @@
 // import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:login_page/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,11 +17,18 @@ class OtpVerificationPage extends StatefulWidget {
 class _OtpVerificationPageState extends State<OtpVerificationPage> {
   final TextEditingController _otpController = TextEditingController();
   String _errorMessage = '';
+  ApiService apiService = ApiService();
 
   Future<void> _verifyOtp() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
     final userId = prefs.getString('userId') ?? '';
+
+    // final response = await apiService.postAPI('active-account/', {
+    //     'otp': _otpController.text.trim(),
+    //     'email': widget.email,
+    //     'token': token,
+    //   },);
 
     final response = await http.post(
       Uri.parse('https://test.securitytroops.in/stapi/v1/active-account/'),

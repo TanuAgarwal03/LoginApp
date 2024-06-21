@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:login_page/apiService.dart';
 import 'package:login_page/change_password.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/home_page.dart';
@@ -41,10 +42,10 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
-  bool _isLoading = false;
   late String userID;
   late String token;
   Map userdata = {};
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -63,7 +64,6 @@ class _MainPageState extends State<MainPage> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _isLoading = true;
       _selectedIndex = index;
     });
     Navigator.pop(context); // Close the drawer after selecting an item
@@ -81,26 +81,25 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _getUserData() async {
     setState(() {
-      _isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token') ?? widget.token;
-    userID = prefs.getString('userId') ?? widget.userId;
 
-    final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/profile/'),
-      headers: {
-        'Authorization': 'Token $token',
-      },
-    );
+    final response = await apiService.getAPI('profile/');
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // token = prefs.getString('token') ?? widget.token;
+    // userID = prefs.getString('userId') ?? widget.userId;
+
+    // final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/profile/'),
+    //   headers: {
+    //     'Authorization': 'Token $token',
+    //   },
+    // );
 
     if (response.statusCode == 200) {
       setState(() {
         userdata = jsonDecode(response.body)['results'][0];
-        _isLoading = false;
       });
     } else {
       setState(() {
-        _isLoading = false;
       });
     }
   }
@@ -169,7 +168,6 @@ class _MainPageState extends State<MainPage> {
               leading: const Icon(Icons.home),
               title: const Text('Blogs'),
               onTap: () {
-                _isLoading = true;
                 _onItemTapped(0);
               },
             ),

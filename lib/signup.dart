@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:login_page/login.dart';
 import 'package:login_page/otpVerify.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,11 +27,11 @@ class _SignUpPageState extends State<SignUpPage> {
   String _selectedFcmType = 'android';
   // ignore: unused_field
   bool _isLoading = false;
-
   List<Map<String, dynamic>> _states = [];
   int? _selectedCountry;
   int? _selectedState;
   List<Map<String, dynamic>> _countries = [];
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Future<void> _fetchCountries() async {
     try {
       _isLoading = true;
+      // final response = await apiService.getAPI('geolocation/country/');
       final response = await http.get(
           Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/country/'));
 
@@ -75,8 +77,9 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _fetchStates(int countryId) async {
     try {
-      final response = await http.get(
-          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'));
+      final response = await apiService.getAPI('geolocation/state/');
+      // final response = await http.get(
+      //     Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -118,10 +121,8 @@ class _SignUpPageState extends State<SignUpPage> {
       });
       return;
     }
-
-    final response = await http.post(
-      Uri.parse('https://test.securitytroops.in/stapi/v1/signup/'),
-      body: {
+    
+    final response = await apiService.postAPI('signup/' ,{
         'username': _usernameController.text.trim(),
         'email': _emailController.text.trim(),
         'password': _passwordController.text.trim(),
@@ -133,8 +134,24 @@ class _SignUpPageState extends State<SignUpPage> {
         'country': _selectedCountry.toString(),
         'state': _selectedState?.toString(),
         'locate': '',
-      },
-    );
+      }, );
+
+    // final response = await http.post(
+    //   Uri.parse('https://test.securitytroops.in/stapi/v1/signup/'),
+    //   body: {
+    //     'username': _usernameController.text.trim(),
+    //     'email': _emailController.text.trim(),
+    //     'password': _passwordController.text.trim(),
+    //     'cpassword': _confirmPasswordController.text.trim(),
+    //     'first_name': _firstNameController.text.trim(),
+    //     'last_name': _lastNameController.text.trim(),
+    //     'mobile': _mobileController.text.trim(),
+    //     'fcm_type': _selectedFcmType,
+    //     'country': _selectedCountry.toString(),
+    //     'state': _selectedState?.toString(),
+    //     'locate': '',
+    //   },
+    // );
 
     if (response.statusCode == 201) {
       print('Sign up successful');

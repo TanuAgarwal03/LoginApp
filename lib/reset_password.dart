@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_page/apiService.dart';
 import 'package:http/http.dart' as http;
 import 'package:login_page/login.dart';
 import 'dart:convert';
@@ -9,7 +10,6 @@ class ResetPasswordPage extends StatefulWidget {
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
-
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
@@ -19,6 +19,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   String _message = '';
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
+  ApiService apiService = ApiService();
 
   Future<void> _resetPassword() async {
     if (_formKey.currentState?.validate() != true) {
@@ -31,6 +32,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     String confirmPassword = _confirmPasswordController.text.trim();
 
     try {
+      // final response = await apiService.postAPI('forgot-password/', {
+      //     'username': username,
+      //     'otp': otp,
+      //     'password': newPassword,
+      //     'cpassword': confirmPassword,
+      //   });
+
       final response = await http.post(
         Uri.parse('https://test.securitytroops.in/stapi/v1/forgot-password/'),
         body: {
@@ -42,6 +50,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
 
       if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Reset password successfully ! Login with your new password.' ),
+              // backgroundColor: Colors.green,
+              // margin: EdgeInsets.all(5),
+              elevation: 10,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         setState(() {
           _message = 'Password reset successfully. Please login with your new password.';
         });

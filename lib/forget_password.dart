@@ -1,6 +1,7 @@
 // import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:login_page/reset_password.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
@@ -13,10 +14,12 @@ class ForgetPasswordPage extends StatefulWidget {
 class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
   final TextEditingController _usernameController = TextEditingController();
   String _message = '';
+  ApiService apiService = ApiService();
 
   Future<void> _forgotPassword() async {
     String username = _usernameController.text.trim();
 
+    // final response = await apiService.postAPI('otp-send/', {'username': username});
     final response = await http.post(
       Uri.parse('https://test.securitytroops.in/stapi/v1/otp-send/'),
       body: {'username': username},
@@ -49,15 +52,16 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
         title: const Text('Forget Password', style: TextStyle(color: Colors.white),),
         backgroundColor: const Color.fromARGB(255, 54, 125, 206),
       ),
-      body: Container(
+      body: SingleChildScrollView(
+        child: Container(
         padding: const EdgeInsets.all(60.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset('assets/image/forgetpwd.jpg',height: 280.0, width: 300.0),
             const SizedBox(height: 5.0),
-            const Text('Please enter your Email address \n       to reset your password.' , style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+            const Text('Please enter your Email address \nto reset your password.' , style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold) ,textAlign: TextAlign.center,),
 
             const SizedBox(height: 28.0),
 
@@ -102,6 +106,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
           ],
         ),
       ),
+      )
     );
   }
 }

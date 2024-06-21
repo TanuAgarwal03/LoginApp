@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_page/userDetailUpdate.dart';
 
@@ -19,6 +20,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
   late String token;
   Map userdata = {};
   bool _isLoading = false;
+  ApiService apiService = ApiService();
+
 
   
   @override
@@ -36,12 +39,14 @@ class _UserDetailPageState extends State<UserDetailPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token') ?? token;
     userID = prefs.getString('userId') ?? userID;
+
+    final response = await apiService.getAPI('profile/');
     
-    final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/profile/'),
-      headers: {
-        'Authorization': 'Token $token',
-      },
-    );
+    // final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/profile/'),
+    //   headers: {
+    //     'Authorization': 'Token $token',
+    //   },
+    // );
 
     if (response.statusCode == 200) {
       setState(() {

@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:login_page/apiService.dart';
 
 class UpdateUserPage extends StatefulWidget {
   final String userId;
   final String token;
-
   const UpdateUserPage({super.key, required this.userId, required this.token});
 
   @override
@@ -33,13 +33,12 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   bool p_image = false;
   bool _isLoading = true;
   bool _isMarried = false;
-
   final ImagePicker _picker = ImagePicker();
-
   List<Map<String, dynamic>> _states = [];
   int? _selectedCountry;
   int? _selectedState;
   List<Map<String, dynamic>> _countries = [];
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -54,13 +53,14 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('https://test.securitytroops.in/stapi/v1/profile/${widget.userId}/'),
-        headers: {
-          'Authorization': 'token ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+      final response = await apiService.getAPI('profile/${widget.userId}/');
+      // final response = await http.get(
+      //   Uri.parse('https://test.securitytroops.in/stapi/v1/profile/${widget.userId}/'),
+      //   headers: {
+      //     'Authorization': 'token ${widget.token}',
+      //     'Content-Type': 'application/json',
+      //   },
+      // );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -103,8 +103,9 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   Future<void> _fetchCountries() async {
     try {
       _isLoading = true;
-      final response = await http.get(
-          Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/country/'));
+      final response = await apiService.getAPI('geolocation/country/');
+      // final response = await http.get(
+      //     Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/country/'));
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(response.body);
@@ -136,9 +137,10 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
 
 Future<void> _fetchStates(int countryId) async {
   try {
-    final response = await http.get(
-      Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'),
-    );
+    final response = await apiService.getAPI('geolocation/state/');
+    // final response = await http.get(
+    //   Uri.parse('https://test.securitytroops.in/stapi/v1/geolocation/state/'),
+    // );
 
     if (response.statusCode == 200) {
       final parsedResponse = jsonDecode(response.body);
@@ -275,9 +277,9 @@ Future<void> _fetchStates(int countryId) async {
         print("Details updated");
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Details updated successfully !!' , style: TextStyle(color: Colors.white),),
-              backgroundColor: Colors.green,
-              margin: EdgeInsets.all(5),
+              content: Text('Details updated successfully !!' ),
+              // backgroundColor: Colors.green,
+              // margin: EdgeInsets.all(5),
               elevation: 10,
               behavior: SnackBarBehavior.floating,
             ),

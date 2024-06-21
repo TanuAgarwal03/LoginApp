@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:login_page/newPoll.dart';
 import 'package:login_page/pollDetails.dart';
 import 'dart:convert';
@@ -19,6 +20,7 @@ class _PollListPageState extends State<PollListPage> {
   late String token;
   late String userId;
   bool _isLoading = false;
+  ApiService apiService = ApiService();
 
   List<Map<String, dynamic>> polls = [];
 
@@ -36,13 +38,14 @@ class _PollListPageState extends State<PollListPage> {
     setState(() {
       _isLoading = true;
     });
-
-    final response = await http.get(
-      Uri.parse('https://test.securitytroops.in/stapi/v1/polls/question/'),
-      headers: {
-        'Authorization': 'token $token',
-      },
-    );
+    
+    final response = await apiService.getAPI('polls/question/');
+    // final response = await http.get(
+    //   Uri.parse('https://test.securitytroops.in/stapi/v1/polls/question/'),
+    //   headers: {
+    //     'Authorization': 'token $token',
+    //   },
+    // );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body)['results'];

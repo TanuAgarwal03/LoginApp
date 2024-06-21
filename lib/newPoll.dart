@@ -122,6 +122,7 @@ class _PollCreatorPageState extends State<PollCreatorPage> {
     final company = prefs.getString('companyId') ?? 0;
 
     if (_formKey.currentState?.validate() ?? false) {
+      // ignore: unused_local_variable
       final pollData = {
         "title": questionController.text,
         "expire": formattedExpiryDate,
@@ -163,6 +164,7 @@ class _PollCreatorPageState extends State<PollCreatorPage> {
 
           for (int i = 0; i < optionControllers.length; i++) {
             final controller = optionControllers[i];
+            // ignore: unused_local_variable
             final optionData = {
               "question": pollId,
               "title": controller.text,

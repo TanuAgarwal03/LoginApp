@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:login_page/post_detail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:translator/translator.dart';
+// import 'package:translator/translator.dart';
 
 class BlogPostsPage extends StatefulWidget {
   const BlogPostsPage({super.key});
@@ -15,12 +16,13 @@ class BlogPostsPage extends StatefulWidget {
 }
 
 class _BlogPostsPageState extends State<BlogPostsPage> {
-  GoogleTranslator translator = GoogleTranslator();
+  // GoogleTranslator translator = GoogleTranslator();
   List<dynamic> _posts = [];
   bool _isLoading = false;
   bool _hasError = false;
   String token = '';
   int userId = 0 ;
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -34,21 +36,36 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
     userId = prefs.getInt('id') ?? 0;
   }
 
+  // Future<void> _fetchPosts() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   token = prefs.getString('token') ?? '';
+  //   setState(() {
+  //     _isLoading = true;
+  //     _hasError = false;
+  //   });
+
+  //   final response = await http.get(
+  //     Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/'),
+  //     headers: {
+  //       'Authorization': 'Token $token',
+  //     },
+  //   );
+
+  //   if (response.statusCode == 200) {
+  //     setState(() {
+  //       _posts = json.decode(response.body)['results'];
+  //       _isLoading = false;
+  //     });
+  //   } else {
+  //     setState(() {
+  //       _isLoading = false;
+  //       _hasError = true;
+  //     });
+  //   }
+  // }
   Future<void> _fetchPosts() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token') ?? '';
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-
-    final response = await http.get(
-      Uri.parse('https://test.securitytroops.in/stapi/v1/blogs/posts/'),
-      headers: {
-        'Authorization': 'Token $token',
-      },
-    );
-
+  try {
+    final response = await apiService.getAPI('blogs/posts/');
     if (response.statusCode == 200) {
       setState(() {
         _posts = json.decode(response.body)['results'];
@@ -60,7 +77,14 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
         _hasError = true;
       });
     }
+  } catch (e) {
+    setState(() {
+      _isLoading = false;
+      _hasError = true;
+    });
   }
+}
+
 
   void _updateLikeStatus(int postId, bool likeStatus, bool userExists) {
     setState(() {
@@ -124,31 +148,38 @@ class _BlogPostsPageState extends State<BlogPostsPage> {
           });
         }
       });
-
       final payload = {
         'like': likeStatus,
         'post': post['id'],
         'user': userId,
       };
-
       final requestType = userExists ? 'patch' : 'post';
       final url = userExists
-          ? 'https://test.securitytroops.in/stapi/v1/blogs/action/$actionId/'
-          : 'https://test.securitytroops.in/stapi/v1/blogs/action/';
+          ? 'blogs/action/$actionId/'
+          : 'blogs/action/';
 
       final response = await (requestType == 'patch'
-          ? http.patch(Uri.parse(url),
-              headers: {
-                'Authorization': 'Token $token',
-                'Content-type': 'application/json',
-              },
-              body: json.encode(payload))
-          : http.post(Uri.parse(url),
-              headers: {
-                'Authorization': 'Token $token',
-                'Content-type': 'application/json',
-              },
-              body: json.encode(payload)));
+          // ? http.patch(Uri.parse(url),
+          //     headers: {
+          //       'Authorization': 'Token $token',
+          //       'Content-type': 'application/json',
+          //     },
+          //     body: json.encode(payload))
+          // : http.post(Uri.parse(url),
+          //     headers: {
+          //       'Authorization': 'Token $token',
+          //       'Content-type': 'application/json',
+          //     },
+          //     body: json.encode(payload))
+          ? apiService.patchAPI(url, payload , headers: {
+            'Authorization' : 'Token $token',
+            'Content-Type' : 'application/json'
+          })
+          : apiService.postAPI(url, payload , headers: {
+            'Authorization' : 'Token $token',
+            'Content-Type' : 'application/json'
+          })
+      );
 
       if (response.statusCode != 200) {
         setState(() {

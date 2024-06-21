@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_page/apiService.dart';
 import 'package:login_page/forget_password.dart';
 import 'package:login_page/main.dart';
 import 'package:login_page/otpVerify.dart';
@@ -20,6 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   String _errorMessage = '';
   bool _passwordVisible = false;
   String companyName = '';
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -67,6 +69,12 @@ class _LoginPageState extends State<LoginPage> {
     String password = _passwordController.text.trim();
     _selectedFcmType = 'android';
 
+    // final response = await apiService.postAPI('login/',{
+    //     'username': username,
+    //     'password': password,
+    //     'fcm_type': _selectedFcmType
+    //   },);
+
     final response = await http.post(
       Uri.parse('https://test.securitytroops.in/stapi/v1/login/'),
       body: {
@@ -101,6 +109,7 @@ class _LoginPageState extends State<LoginPage> {
       final data = jsonDecode(response.body);
       String token = data['token'];
 
+        // ignore: unnecessary_null_comparison
         if (token != null) {
           Navigator.pushReplacement(
             context,
@@ -121,21 +130,23 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
   Future<void> fetchCompanyData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString('token') ?? '';
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // String token = prefs.getString('token') ?? '';
 
-    if (token == null) {
-    setState(() {
-      print('Token not found. Please log in again.');
-    });
-    return;
-  }
+  //   if (token == null) {
+  //   setState(() {
+  //     print('Token not found. Please log in again.');
+  //   });
+  //   return;
+  // }
 
     try {
-      final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/agency/company/'),
-      headers: {
-        'Authorization' : 'Token $token',
-      });
+
+      final response = await apiService.getAPI('agency/company/');
+      // final response = await http.get(Uri.parse('https://test.securitytroops.in/stapi/v1/agency/company/'),
+      // headers: {
+      //   'Authorization' : 'Token $token',
+      // });
       if (response.statusCode == 200) {
         final companyData = json.decode(response.body)['results'][0];
         String companyId = companyData['id'].toString();
